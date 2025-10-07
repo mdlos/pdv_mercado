@@ -35,8 +35,8 @@ O repositório inclui uma pasta chamada **atividade**, onde estão os arquivos r
 
 | Systema  | Local padrão da pasta                       |
 | ------- | -------------------------------------------- |
-| Linux   | `~/./conversor`                              |
-| macOS   | `~/./conversor`                              |
+| Linux   | `~/`                              |
+| macOS   | `~/`                              |
 | Windows | `~\Documents\`                               |
 
 - Escolha uma das maneiras de instalar
