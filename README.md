@@ -44,7 +44,6 @@ O repositório inclui uma pasta chamada **atividade**, onde estão os arquivos r
     - Clone o git `/home/` folder.
   - **ZIP**
     - Desacompactar o arquivo Zip em sua pasta padrão.
-- Compilar o arquivo conversor.c no linux com o comando gcc -o conversor conversor.c pkg-config --cflags --libs gtk+-3.0.
 - No Windows.
 - No Linux.
 
