@@ -55,7 +55,6 @@ O repositório inclui uma pasta chamada **atividade**, onde estão os arquivos r
     <td align="center"><img style="" src="https://avatars.githubusercontent.com/u/72825281?v=4" width="100px;" alt=""/><br /><sub><b> Marcio Fonseca </b></sub></a><br />👨‍💻</a></td>
     <td align="center"><img style="" src="https://avatars.githubusercontent.com/u/132524236?v=4" width="100px;" alt=""/><br /><sub><b> Gustavo Públio </b></sub></a><br />👨‍💻</a></td>
     <td align="center"><img style="" src="https://avatars.githubusercontent.com/u/145059388?v=4" width="100px;" alt=""/><br /><sub><b> Patrick Tigre</b></sub></a><br />👨‍💻</a></td>
-    <td align="center"><img style="" src="https://avatars.githubusercontent.com/u/173219343?v=4" width="100px;" alt=""/><br /><sub><b> Laiana Barbosa</b></sub></a><br />👨‍💻</a></td>
     <td align="center"><img style="" src="https://avatars.githubusercontent.com/u/175572993?v=4" width="100px;" alt=""/><br /><sub><b> Brener  </b></sub></a><br />👨‍💻</a></td>
     <td align="center"><img style="" src="https://avatars.githubusercontent.com/u/204011390?v=4" width="100px;" alt=""/><br /><sub><b> Alessandro Brito </b></sub></a><br />👨‍💻</a></td>
     <td align="center"><img style="" src="https://avatars.githubusercontent.com/u/119082207?v=4" width="100px;" alt=""/><br /><sub><b> Ronilson Rocha  </b></sub></a><br />👨‍💻</a></td>
