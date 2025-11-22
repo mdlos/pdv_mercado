@@ -1,0 +1,46 @@
+# -----------------------------------------------
+# 1. Arquivos de Ambiente Virtual (Obrigatório)
+# -----------------------------------------------
+# Ignora a pasta venv inteira
+venv/
+.venv/
+env/
+
+# -----------------------------------------------
+# 2. Arquivos Sensíveis e Configuração Local (Crucial)
+# -----------------------------------------------
+# Credenciais e variáveis de ambiente (NUNCA DEVEM SER COMPARTILHADAS)
+.env
+.flaskenv
+
+# -----------------------------------------------
+# 3. Arquivos de Cache e Build do Python/Pytest
+# -----------------------------------------------
+# Bytecode do Python (pasta __pycache__)
+__pycache__/
+*.pyc
+
+# Arquivos de cache do Pytest
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Pastas de distribuição (se você for empacotar o projeto)
+dist/
+build/
+*.egg-info/
+
+# -----------------------------------------------
+# 4. Arquivos de IDEs (Editores de Código)
+# -----------------------------------------------
+# Visual Studio Code
+.vscode/
+
+# PyCharm/IntelliJ
+.idea/
+
+# -----------------------------------------------
+# 5. Arquivos de Sistema Operacional
+# -----------------------------------------------
+.DS_Store # macOS
+Thumbs.db # Windows

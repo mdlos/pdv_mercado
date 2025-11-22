@@ -1,0 +1,15 @@
+blinker==1.9.0
+click==8.3.1
+Flask==3.1.2
+iniconfig==2.3.0
+itsdangerous==2.2.0
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+marshmallow==4.1.0
+packaging==25.0
+pluggy==1.6.0
+psycopg==3.2.12
+Pygments==2.19.2
+pytest==9.0.1
+python-dotenv==1.2.1
+Werkzeug==3.1.3
