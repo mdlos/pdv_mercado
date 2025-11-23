@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS tipo_pagamento (
 -- =====================================================================================
 CREATE TABLE IF NOT EXISTS tipo_funcionario (
     id_tipo_funcionario INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    nome_social VARCHAR(100) UNIQUE NOT NULL
+    cargo VARCHAR(100) UNIQUE NOT NULL
 );
 
 -- =====================================================================================
@@ -72,9 +72,10 @@ CREATE TABLE IF NOT EXISTS fornecedor (
 -- =====================================================================================
 CREATE TABLE IF NOT EXISTS produto (
     codigo_produto INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    nome VARCHAR(100) NOT NULL,
+    nome VARCHAR(100) NOT NULL UNIQUE,
     descricao TEXT NOT NULL,
-    preco DECIMAL(10, 2) NOT NULL
+    preco DECIMAL(10, 2)  NOT NULL CHECK (preco > 0),
+	codigo_barras VARCHAR(50)  UNIQUE
 );
 
 -- =====================================================================================
@@ -83,10 +84,10 @@ CREATE TABLE IF NOT EXISTS produto (
 CREATE TABLE IF NOT EXISTS funcionario (
     cpf VARCHAR(11) PRIMARY KEY,
     sexo CHAR(1),
-    email VARCHAR(100),
+    email VARCHAR(100) UNIQUE,
     senha VARCHAR(255) NOT NULL,
     nome VARCHAR(100) NOT NULL,
-    sobrenome VARCHAR(100) NOT NULL,
+    sobrenome VARCHAR(100) 
     nome_social VARCHAR(100),
     telefone VARCHAR(15),
     id_tipo_funcionario INT NOT NULL
@@ -380,3 +381,8 @@ ALTER TABLE nota_fiscal
 ADD CONSTRAINT fk_nota_fiscal_venda
 FOREIGN KEY (id_venda)
 REFERENCES venda(id_venda);
+
+#  =====================================================================================
+INSERT INTO tipo_funcionario (cargo) VALUES ('Gerente') ON CONFLICT (cargo) DO NOTHING;
+INSERT INTO tipo_funcionario (cargo) VALUES ('Caixa') ON CONFLICT (cargo) DO NOTHING;
+# ===================================================================================== 

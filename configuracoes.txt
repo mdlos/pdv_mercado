@@ -1,0 +1,17 @@
+Criar o ambiente virtual e remove o que esta no projeto
+python3 -m venv venv
+Ativando-o 
+source venv/bin/activate
+instalar as dependência do projeto
+pip install -r requirements.txt
+
+Rodar a aplicação Back end
+Python app.py
+
+Rodar os testes
+pytest tests/test_cliente_dao.py -v
+pytest tests/test_funcionario_dao.py -v
+pytest tests/test_produto_dao.py -v
+
+
+
