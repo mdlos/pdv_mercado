@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS produto (
 CREATE TABLE IF NOT EXISTS funcionario (
     cpf VARCHAR(11) PRIMARY KEY,
     sexo CHAR(1),
-    email VARCHAR(100) UNIQUE,
+    email VARCHAR(100)  NOT NULL UNIQUE,
     senha VARCHAR(255) NOT NULL,
     nome VARCHAR(100) NOT NULL,
     sobrenome VARCHAR(100) 
@@ -102,7 +102,8 @@ CREATE TABLE IF NOT EXISTS fluxo_caixa (
     saldo_inicial DECIMAL(10, 2) NOT NULL,
     saldo_final_informado DECIMAL(10, 2),
     data_hora_abertura TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    cpf_funcionario_abertura VARCHAR(11) NOT NULL
+    cpf_funcionario_abertura VARCHAR(11) NOT NULL,
+   data_hora_fechamento TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- =====================================================================================
@@ -382,7 +383,17 @@ ADD CONSTRAINT fk_nota_fiscal_venda
 FOREIGN KEY (id_venda)
 REFERENCES venda(id_venda);
 
-#  =====================================================================================
+-- =====================================================================================
 INSERT INTO tipo_funcionario (cargo) VALUES ('Gerente') ON CONFLICT (cargo) DO NOTHING;
 INSERT INTO tipo_funcionario (cargo) VALUES ('Caixa') ON CONFLICT (cargo) DO NOTHING;
-# ===================================================================================== 
+-- ===================================================================================== 
+
+--  =====================================================================================
+--Cadastrar formas de pagamentos)
+INSERT INTO tipo_pagamento (descricao) VALUES ('Dinheiro') ON CONFLICT (descricao) DO NOTHING;
+INSERT INTO tipo_pagamento (descricao) VALUES ('Cartão Débito') ON CONFLICT (descricao) DO NOTHING;
+INSERT INTO tipo_pagamento (descricao) VALUES ('Cartão Crédito') ON CONFLICT (descricao) DO NOTHING;
+INSERT INTO tipo_pagamento (descricao) VALUES ('PIX') ON CONFLICT (descricao) DO NOTHING;
+INSERT INTO tipo_pagamento (descricao) VALUES ('Vale Credito') ON CONFLICT (descricao) DO NOTHING;
+INSERT INTO tipo_pagamento (descricao) VALUES ('Outros') ON CONFLICT (descricao) DO NOTHING;
+-- =====================================================================================

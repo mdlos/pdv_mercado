@@ -1,18 +1,19 @@
-# src/services/admin_setup_service.py (VERSÃO FINAL E CORRIGIDA)
+# src/services/admin_setup_service.py (VERSÃO FINAL E COMPLETA - Ciclo Quebrado)
 
 from src.models.funcionario_dao import FuncionarioDAO
 from src.db_connection import get_db_connection
 import sys
 import logging
 import os
-# REMOVER: from app import bcrypt 
+# REMOVER A IMPORTAÇÃO: from app import bcrypt 
+# (O objeto bcrypt agora é passado como argumento da função)
 
 logger = logging.getLogger(__name__)
 
-# A função AGORA RECEBE O OBJETO BCRYPT DIRETAMENTE
 def initialize_application(app, bcrypt): 
     """
     Função principal de inicialização: cria um Superusuário MINIMAL.
+    O objeto bcrypt é passado como argumento para quebrar a dependência circular.
     """
     
     conn = get_db_connection()
@@ -28,7 +29,6 @@ def initialize_application(app, bcrypt):
             result = cur.fetchone()
 
         if result is None:
-            # Se o tipo Admin não existe, criamos e pegamos o ID gerado
             with conn.cursor() as cur:
                 cur.execute(f"INSERT INTO tipo_funcionario (cargo) VALUES (%s) RETURNING id_tipo_funcionario;", (CARGO_ADMIN_TEMP,))
                 result = cur.fetchone()
@@ -48,8 +48,9 @@ def initialize_application(app, bcrypt):
             print("🚀 PRIMEIRO SETUP DA APLICAÇÃO: CADASTRO DO SUPERUSUÁRIO TEMPORÁRIO")
             print("==================================================")
             
-            # --- COLETA DE DADOS MINIMAIS ---
+            # --- COLETA DE DADOS OBRIGATÓRIOS ---
             nome = input("Nome do Superusuário: ")
+            email = input("Email do Superusuário (Obrigatório): ") # <-- CAMPO AGORA COLETADO
             
             # --- COLETA DE SENHA ---
             while True:
@@ -61,14 +62,14 @@ def initialize_application(app, bcrypt):
             # 3. Hash da Senha e Inserção
             senha_hashed = bcrypt.generate_password_hash(senha_pura).decode('utf-8')
             
-            # Insere o Superusuário Mínimo
+            # Insere o Superusuário Mínimo (com email preenchido e o resto como NULL)
             cpf_inserido = funcionario_dao.insert(
                 cpf=admin_cpf,
                 nome=nome,
                 sobrenome=None, 
                 senha_hashed=senha_hashed,
                 id_tipo_funcionario=tipo_admin_id,
-                email=None, 
+                email=email, # <-- PASSANDO O EMAIL COLETADO
                 sexo=None, 
                 telefone=None,
                 nome_social=None, 
@@ -77,9 +78,7 @@ def initialize_application(app, bcrypt):
 
             if cpf_inserido:
                 print("\n✅ SUPERUSUÁRIO TEMPORÁRIO CRIADO COM SUCESSO!")
-                print(f"Nome de Acesso: {nome}")
                 print(f"CPF de Acesso: {admin_cpf}")
-                print(f"Cargo ID: {tipo_admin_id}")
                 print("==================================================\n")
             else:
                 print("ERRO: Falha na inserção do Superusuário. Verifique as configurações do DB.")

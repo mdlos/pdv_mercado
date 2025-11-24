@@ -12,6 +12,6 @@ Rodar os testes
 pytest tests/test_cliente_dao.py -v
 pytest tests/test_funcionario_dao.py -v
 pytest tests/test_produto_dao.py -v
-
-
-
+pytest tests/test_venda_dao.py -v
+pytest tests/test_devolucao_dao.py -v
+pytest tests/test_transacoes_dao.py -v

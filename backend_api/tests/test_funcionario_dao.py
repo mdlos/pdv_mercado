@@ -49,7 +49,6 @@ def configurar_teste_funcionario(dados):
     senha_hashed = bcrypt.generate_password_hash(dados['senha_pura']).decode('utf-8')
     
     # 2. Chama o INSERT do DAO
-    # NOTA: MANTENHA OS NOMES DOS MÉTODOS AQUI IGUAIS AOS NOMES NO SEU funcionario_dao.py
     cpf_inserido = funcionario_dao.insert(
         cpf=dados['cpf'],
         nome=dados['nome'],
@@ -66,7 +65,6 @@ def configurar_teste_funcionario(dados):
 
 def limpar_funcionario_inserido(cpf):
     """ Tenta deletar o funcionário e sua localização. """
-    # NOTA: MANTENHA OS NOMES DOS MÉTODOS AQUI IGUAIS AOS NOMES NO SEU funcionario_dao.py
     funcionario_dao.delete(cpf) 
 
 # --- Testes de Integração CRUD e Segurança ---
