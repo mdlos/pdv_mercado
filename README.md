@@ -29,13 +29,14 @@ O repositório inclui uma pasta chamada **atividade**, onde estão os arquivos r
 3. **Banco de Dados** – PostgreSQL, MariaDB ou MySQL;
 4. **Linguagens** – HTML, CSS e PHP;
 5. **Framework** – React, para a interface web do sistema.
+6. **Docker – para conteinerização e facilitação do deploy do sistema.
 
 
 ## 👨‍💻 Instalação
 
 | Systema  | Local padrão da pasta                       |
 | ------- | -------------------------------------------- |
-| Linux   | `~/`                              |
+| Linux   | `~/opt/marketcoffee`                              |
 | macOS   | `~/`                              |
 | Windows | `~\Documents\`                               |
 
