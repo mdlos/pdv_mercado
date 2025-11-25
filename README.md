@@ -27,9 +27,9 @@ O repositório inclui uma pasta chamada **atividade**, onde estão os arquivos r
 1. **Git e GitHub** – para versionamento e colaboração;
 2. **VS Code** – ambiente de desenvolvimento;
 3. **Banco de Dados** – PostgreSQL, MariaDB ou MySQL;
-4. **Linguagens** – HTML, CSS e PHP;
+4. **Linguagens** – HTML, CSS, Python e PHP;
 5. **Framework** – React, para a interface web do sistema.
-6. **Docker – para conteinerização e facilitação do deploy do sistema.
+6. **Docker** – para conteinerização e facilitação do deploy do sistema.
 
 
 ## 👨‍💻 Instalação
