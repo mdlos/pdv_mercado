@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS funcionario (
     email VARCHAR(100)  NOT NULL UNIQUE,
     senha VARCHAR(255) NOT NULL,
     nome VARCHAR(100) NOT NULL,
-    sobrenome VARCHAR(100) 
+    sobrenome VARCHAR(100), 
     nome_social VARCHAR(100),
     telefone VARCHAR(15),
     id_tipo_funcionario INT NOT NULL
