@@ -48,9 +48,7 @@ O repositório inclui uma pasta chamada **atividade**, onde estão os arquivos r
 - No Windows.
 - No Linux.
 # Market Coffee PDV – Guia de Instalação com Docker (Linux)
-
 Passo a passo como instalar e executar o projeto Market Coffee PDV no Linux utilizando Docker e Docker Compose.
-
 ## 1. Pré-requisitos
 Certifique-se de que seu sistema está atualizado:
 ```
@@ -222,7 +220,6 @@ Frontend (React ou equivalente):\
 [http://localhost:3000]()
 Banco de dados:\
 PostgreSQL rodando em localhost:5432
-
 
 ## 💻 Desenvolvedores
  
