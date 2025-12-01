@@ -25,3 +25,10 @@
   --color-danger-hover: #e33c3c;
   --color-info-hover: #3479e7;
 }
+
+body {
+  font-family: 'Roboto', sans-serif;
+  display: flex;
+  margin: 0;
+  padding: 0;
+}

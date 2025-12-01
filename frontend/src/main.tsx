@@ -5,12 +5,15 @@ import { ThemeProvider } from '@emotion/react';
 
 import './index.css';
 
-import Login from './pages/login';
+
 import Header from './shared/components/Header';
 import SideBar from './shared/components/SideBar';
+// import Login from './pages/login';
+
 import { DrawerProvider } from './shared/contexts';
 import { BrowserRouter } from 'react-router-dom';
 import { AppRoutes } from './routes';
+
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
