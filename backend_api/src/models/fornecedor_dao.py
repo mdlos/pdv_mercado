@@ -16,7 +16,7 @@ class FornecedorDAO:
     # -----------------------------------------------------------------
     
     def insert(self, cnpj: str, razao_social: str, email: str, celular: str = None, 
-               situacao_cadastral: str = None, data_abertura: str = None, localizacao_data: dict = None):
+            situacao_cadastral: str = None, data_abertura: str = None, localizacao_data: dict = None):
         """ Insere a localização e, em seguida, o fornecedor na mesma transação. """
         # ... (Mantido o código insert) ...
         conn = None
@@ -93,26 +93,57 @@ class FornecedorDAO:
         finally:
             if conn: conn.close()
 
-    def find_all(self):
-        """ Retorna todos os fornecedores. """
-        # ... (Mantido o código find_all) ...
+    def find_all(self, limit=None): # 🔑 AGORA ACEITA O PARÂMETRO LIMIT
+        """ Retorna todos os fornecedores (ou limitado). """
         conn = None
         try:
             conn = get_db_connection()
             with conn.cursor() as cur:
+                # Query com LEFT JOIN para buscar dados
                 sql = """
                     SELECT f.id_fornecedor, f.cnpj, f.razao_social, f.email, f.celular, f.data_abertura,
-                           l.cep, l.cidade, l.uf
+                        l.cep, l.cidade, l.uf, COALESCE(l.id_localizacao, 0) AS id_localizacao
                     FROM fornecedor f
                     LEFT JOIN localizacao l ON f.id_localizacao = l.id_localizacao
-                    ORDER BY f.id_fornecedor;
+                    ORDER BY f.id_fornecedor
                 """
+                if limit is not None:
+                    sql += f" LIMIT {limit}" # Adiciona a cláusula LIMIT se for solicitada
+                    
                 cur.execute(sql)
                 columns = [desc[0] for desc in cur.description]
                 return [dict(zip(columns, row)) for row in cur.fetchall()]
         except Exception as e:
             logger.error(f"Erro ao buscar todos os fornecedores: {e}")
             return []
+        finally:
+            if conn: conn.close()
+            
+    def find_by_cnpj(self, cnpj: str): # <--- NOVO MÉTODO FALTANTE
+        """ Busca um fornecedor pelo CNPJ, fazendo JOIN com localizacao. """
+        conn = get_db_connection()
+        if conn is None: return None
+
+        try:
+            with conn.cursor() as cur:
+                # Query com JOIN para buscar todos os dados relacionados (CNPJ, Razão Social, Endereço)
+                sql = """
+                    SELECT 
+                        f.id_fornecedor, f.cnpj, f.razao_social, f.email, f.celular, f.situacao_cadastral, f.data_abertura, f.id_localizacao,
+                        l.cep, l.logradouro, l.numero, l.bairro, l.cidade, l.uf, l.id_localizacao AS loc_id
+                    FROM fornecedor f
+                    LEFT JOIN localizacao l ON f.id_localizacao = l.id_localizacao
+                    WHERE f.cnpj = %s;
+                    """
+                cur.execute(sql, (cnpj,))
+                row = cur.fetchone()
+                if row is None: return None
+                
+                columns = [desc[0] for desc in cur.description]
+                return dict(zip(columns, row))
+        except Exception as e:
+            logger.error(f"Erro ao buscar fornecedor por CNPJ {cnpj}: {e}")
+            return None
         finally:
             if conn: conn.close()
             

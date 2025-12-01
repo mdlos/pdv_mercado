@@ -1,19 +1,18 @@
-# src/services/admin_setup_service.py (VERSÃO FINAL E COMPLETA - Ciclo Quebrado)
+# src/services/admin_setup_service.py (VERSÃO FINAL SEM IMPORTAÇÃO CIRCULAR)
 
 from src.models.funcionario_dao import FuncionarioDAO
 from src.db_connection import get_db_connection
 import sys
 import logging
 import os
-# REMOVER A IMPORTAÇÃO: from app import bcrypt 
-# (O objeto bcrypt agora é passado como argumento da função)
+# REMOVER ESTA LINHA: from app import bcrypt 
+# O objeto 'bcrypt' é passado como argumento na função initialize_application(app, bcrypt)
 
 logger = logging.getLogger(__name__)
 
-def initialize_application(app, bcrypt): 
+def initialize_application(app, bcrypt): # A função recebe o objeto bcrypt como argumento
     """
     Função principal de inicialização: cria um Superusuário MINIMAL.
-    O objeto bcrypt é passado como argumento para quebrar a dependência circular.
     """
     
     conn = get_db_connection()
@@ -44,20 +43,23 @@ def initialize_application(app, bcrypt):
 
         if admin_exists is None:
             
-            print("\n" + "="*50)
-            print("🚀 PRIMEIRO SETUP DA APLICAÇÃO: CADASTRO DO SUPERUSUÁRIO TEMPORÁRIO")
-            print("==================================================")
-            
-            # --- COLETA DE DADOS OBRIGATÓRIOS ---
-            nome = input("Nome do Superusuário: ")
-            email = input("Email do Superusuário (Obrigatório): ") # <-- CAMPO AGORA COLETADO
-            
-            # --- COLETA DE SENHA ---
-            while True:
-                senha_pura = input("Senha do Superusuário (mínimo 6 caracteres): ")
-                if len(senha_pura) >= 6:
-                    break
-                print("A senha deve ter pelo menos 6 caracteres.")
+            # --- COLETA DE DADOS OBRIGATÓRIOS (USO INTERNO DO PYTEST) ---
+            if app.config.get("TESTING"):
+                nome = "PytestAdmin"
+                email = "pytest@admin.com"
+                senha_pura = "Pytest123"
+            else:
+                # MODO NORMAL: Pede INPUT ao usuário
+                print("\n" + "="*50)
+                print("🚀 PRIMEIRO SETUP DA APLICAÇÃO: CADASTRO DO SUPERUSUÁRIO TEMPORÁRIO")
+                print("==================================================")
+                nome = input("Nome do Superusuário: ")
+                email = input("Email do Superusuário (Obrigatório): ")
+                while True:
+                    senha_pura = input("Senha do Superusuário (mínimo 6 caracteres): ")
+                    if len(senha_pura) >= 6:
+                        break
+                    print("A senha deve ter pelo menos 6 caracteres.")
             
             # 3. Hash da Senha e Inserção
             senha_hashed = bcrypt.generate_password_hash(senha_pura).decode('utf-8')
@@ -69,7 +71,7 @@ def initialize_application(app, bcrypt):
                 sobrenome=None, 
                 senha_hashed=senha_hashed,
                 id_tipo_funcionario=tipo_admin_id,
-                email=email, # <-- PASSANDO O EMAIL COLETADO
+                email=email,
                 sexo=None, 
                 telefone=None,
                 nome_social=None, 
@@ -77,11 +79,12 @@ def initialize_application(app, bcrypt):
             )
 
             if cpf_inserido:
-                print("\n✅ SUPERUSUÁRIO TEMPORÁRIO CRIADO COM SUCESSO!")
-                print(f"CPF de Acesso: {admin_cpf}")
-                print("==================================================\n")
+                if not app.config.get("TESTING"):
+                    print("\n✅ SUPERUSUÁRIO TEMPORÁRIO CRIADO COM SUCESSO!")
+                    print(f"CPF de Acesso: {admin_cpf}")
+                    print("==================================================\n")
             else:
-                print("ERRO: Falha na inserção do Superusuário. Verifique as configurações do DB.")
+                logger.error("ERRO: Falha na inserção do Superusuário. Verifique as configurações do DB.")
                 sys.exit(1)
         
         else:

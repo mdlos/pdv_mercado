@@ -6,12 +6,11 @@ from flask_bcrypt import Bcrypt # Importamos Bcrypt, mas ele precisa ser inicial
 
 logger = logging.getLogger(__name__)
 
-# NOTA: O objeto Bcrypt será injetado ou inicializado no app.py, por enquanto o DAO foca no SQL.
-
 class FuncionarioDAO:
     
     def __init__(self):
-        self.table_name = "funcionario"
+        # Apenas armazena o nome da tabela. A conexão é feita por método.
+        self.table_name = "funcionario" 
     
     # -----------------------------------------------------------------
     # C - CREATE (Inserção)
@@ -79,7 +78,7 @@ class FuncionarioDAO:
                 sql = """
                     SELECT 
                         f.cpf, f.nome, f.sobrenome, f.email, f.telefone, f.sexo, f.nome_social, f.id_tipo_funcionario, f.id_localizacao, f.senha,
-                        tf.cargo AS tipo_cargo, -- ALTERADO: de 'tf.nome_social' para 'tf.cargo'
+                        tf.cargo AS tipo_cargo,
                         l.cep, l.logradouro, l.numero, l.bairro, l.cidade, l.uf, l.id_localizacao AS loc_id
                     FROM funcionario f
                     LEFT JOIN localizacao l ON f.id_localizacao = l.id_localizacao
@@ -94,6 +93,66 @@ class FuncionarioDAO:
                 return dict(zip(columns, row))
         except Exception as e:
             logger.error(f"Erro ao buscar funcionário {cpf}: {e}")
+            return None
+        finally:
+            if conn: conn.close()
+        
+    def find_all(self):
+        """ Busca e retorna todos os funcionários com seus dados relacionados. """
+        conn = get_db_connection()
+        if conn is None: return []
+
+        try:
+            with conn.cursor() as cur:
+                # Query com JOINs para buscar todos os dados relacionados
+                sql = """
+                    SELECT 
+                        f.cpf, f.nome, f.sobrenome, f.email, f.telefone, f.sexo, f.nome_social, f.id_tipo_funcionario, f.id_localizacao, f.senha,
+                        tf.cargo AS tipo_cargo, 
+                        l.cep, l.logradouro, l.numero, l.bairro, l.cidade, l.uf, l.id_localizacao AS loc_id
+                    FROM funcionario f
+                    LEFT JOIN localizacao l ON f.id_localizacao = l.id_localizacao
+                    LEFT JOIN tipo_funcionario tf ON f.id_tipo_funcionario = tf.id_tipo_funcionario
+                    ORDER BY f.nome;
+                """
+                cur.execute(sql)
+                rows = cur.fetchall()
+                
+                columns = [desc[0] for desc in cur.description]
+                return [dict(zip(columns, row)) for row in rows]
+        except Exception as e:
+            logger.error(f"Erro ao buscar todos os funcionários: {e}")
+            return []
+        finally:
+            if conn: conn.close()
+            
+    def find_by_email(self, email: str):
+        """ 
+        Busca um funcionário pelo email (usado para login). 
+        Este método substitui o método 'buscar_por_email' que estava com erro.
+        """
+        conn = get_db_connection()
+        if conn is None: return None
+        
+        try:
+            with conn.cursor() as cur:
+                # Query com JOIN para buscar o cargo (tipo_cargo) e a senha hashed
+                sql = """
+                    SELECT f.*, tf.cargo AS tipo_cargo
+                    FROM funcionario f
+                    LEFT JOIN tipo_funcionario tf ON f.id_tipo_funcionario = tf.id_tipo_funcionario
+                    WHERE f.email = %s;
+                """
+                cur.execute(sql, (email,))
+                row = cur.fetchone()
+                
+                if row is None: return None
+                
+                columns = [desc[0] for desc in cur.description]
+                return dict(zip(columns, row))
+                
+        except Exception as e:
+            print(f"Erro no FuncionarioDAO.find_by_email: {e}")
             return None
         finally:
             if conn: conn.close()
@@ -129,6 +188,7 @@ class FuncionarioDAO:
             return 0
         finally:
             if conn: conn.close()
+            
     # -----------------------------------------------------------------
     # U - UPDATE (Atualização)
     # -----------------------------------------------------------------

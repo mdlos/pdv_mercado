@@ -59,13 +59,15 @@ class EstoqueDAO:
             return None
         finally:
             if conn: conn.close()
-
-    # -----------------------------------------------------------------
+# -----------------------------------------------------------------
     # U - UPDATE (Atualiza a quantidade)
     # -----------------------------------------------------------------
 
     def update_quantity(self, codigo_produto: int, nova_quantidade: int):
-        """ Atualiza a quantidade do produto no estoque. """
+        """ 
+        Atualiza a quantidade do produto no estoque. 
+        (CORREÇÃO: Relança a exceção do DB para que o teste a capture).
+        """
         conn = None
         try:
             conn = get_db_connection()
@@ -80,6 +82,7 @@ class EstoqueDAO:
         except Exception as e:
             logger.error(f"Erro ao atualizar estoque de produto {codigo_produto}: {e}")
             if conn: conn.rollback()
-            return 0
+            # 🔑 CORREÇÃO CRÍTICA: Relança a exceção (IntegrityError) para o Pytest
+            raise e 
         finally:
             if conn: conn.close()

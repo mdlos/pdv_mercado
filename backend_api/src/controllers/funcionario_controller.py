@@ -15,9 +15,11 @@ logger = logging.getLogger(__name__)
 # Inicializa o Blueprint
 funcionario_bp = Blueprint('funcionario', __name__)
 
-# Instancia o DAO e o Schema
+# Instancia o DAO e os Schemas
 funcionario_dao = FuncionarioDAO()
-funcionario_schema = FuncionarioSchema()
+# 🔑 CORREÇÃO: Instanciar a versão single (sem 'many=True') para uso nas rotas que buscam um único objeto
+funcionario_schema = FuncionarioSchema() 
+funcionarios_schema = FuncionarioSchema(many=True)
 
 # -----------------------------------------------------------
 # C - CREATE (Criação de Novo Funcionário)
@@ -29,6 +31,7 @@ def create_funcionario():
     
     # 1. Validação dos dados
     try:
+        # Usa funcionario_schema (instância single)
         funcionario_data = funcionario_schema.load(data)
     except Exception as e:
         error_details = getattr(e, 'messages', str(e))
@@ -70,9 +73,25 @@ def create_funcionario():
         return jsonify({"message": f"Erro interno no servidor: {e}"}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 # -----------------------------------------------------------
+# R - READ ALL (Busca Todos)
+# -----------------------------------------------------------
+@funcionario_bp.route('/', methods=['GET'])
+def listar_todos_funcionarios():
+    """ Rota para buscar e retornar todos os funcionários cadastrados. """
+    
+    # 1. Chama o DAO para buscar todos
+    funcionarios_data = funcionario_dao.buscar_todos() 
+    
+    if funcionarios_data:
+        # 2. Serializa a lista de objetos (usando o schema com many=True)
+        return funcionarios_schema.dump(funcionarios_data, many=True), HTTPStatus.OK
+    else:
+        return jsonify({"message": "Nenhum funcionário cadastrado."}), HTTPStatus.NOT_FOUND
+
+# -----------------------------------------------------------
 # R - READ (Busca por CPF)
 # -----------------------------------------------------------
-@funcionario_bp.route('/<string:cpf>', methods=['GET']) # <--- ERRO DE SINTAXE CORRIGIDO AQUI
+@funcionario_bp.route('/<string:cpf>', methods=['GET']) 
 def get_funcionario(cpf):
     """ Rota para buscar um funcionário pelo CPF. """
     
@@ -86,6 +105,7 @@ def get_funcionario(cpf):
         return funcionario_schema.dump(funcionario_data), HTTPStatus.OK
     else:
         return jsonify({"message": f"Funcionário com CPF {cpf} não encontrado."}), HTTPStatus.NOT_FOUND
+
 # -----------------------------------------------------------
 # D - DELETE (Exclusão por CPF)
 # -----------------------------------------------------------

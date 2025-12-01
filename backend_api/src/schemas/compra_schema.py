@@ -1,6 +1,6 @@
 # src/schemas/compra_schema.py
 
-from marshmallow import Schema, fields, validate, validates, ValidationError, post_load
+from marshmallow import Schema, fields, validate, post_load
 from decimal import Decimal
 from datetime import date
 
@@ -16,6 +16,7 @@ class CompraItemSchema(Schema):
     @post_load
     def calculate_subtotal(self, data, **kwargs):
         """ Calcula o subtotal do item. """
+        # Garantir que o subtotal é calculado
         data['subtotal'] = data['quantidade_compra'] * data['preco_unitario']
         return data
 
@@ -29,7 +30,7 @@ class CompraSchema(Schema):
     id_fornecedor = fields.Int(required=True, validate=validate.Range(min=1))
     
     # Detalhes da Compra
-    data_compra = fields.Date(required=False, load_default=date.today()) # Data atual como padrão
+    data_compra = fields.Date(required=False, load_default=date.today().isoformat()) 
     data_entrega = fields.Date(required=False, allow_none=True)
     valor_total_compra = fields.Decimal(dump_only=True, as_string=True)
     

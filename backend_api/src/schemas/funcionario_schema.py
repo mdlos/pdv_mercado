@@ -62,7 +62,11 @@ class FuncionarioSchema(Schema):
         return data
 
     @validates("cpf")
-    def validate_cpf_length(self, value):
+    def validate_cpf_length(self, value, **kwargs): # <--- ADICIONAR **kwargs AQUI
+        """ Garante que o CPF, após a limpeza, tenha 11 dígitos. """
+        # NOTA: O clean_only_numbers deve ser acessível via import no topo do arquivo.
+        from src.utils.formatters import clean_only_numbers 
+
         if len(clean_only_numbers(value)) != 11:
             raise ValidationError("O CPF deve conter exatamente 11 dígitos.")
 

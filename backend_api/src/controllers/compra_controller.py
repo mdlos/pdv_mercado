@@ -31,7 +31,7 @@ def registrar_compra():
         
         if id_compra:
             return jsonify({
-                "message": f"Compra registrada com sucesso. Estoque atualizado.", 
+                "message": "Compra registrada com sucesso. Estoque atualizado.", 
                 "id_compra": id_compra
             }), HTTPStatus.CREATED
         else:

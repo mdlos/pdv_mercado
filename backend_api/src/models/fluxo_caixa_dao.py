@@ -26,6 +26,7 @@ class FluxoCaixaDAO:
                     VALUES ('ABERTO', %s, %s)
                     RETURNING id_fluxo;
                 """
+                # ESTA É A LINHA CRÍTICA: O saldo_inicial precisa ser um valor Decimal aqui.
                 cur.execute(sql, (saldo_inicial, cpf_funcionario))
                 id_fluxo = cur.fetchone()[0]
                 conn.commit()

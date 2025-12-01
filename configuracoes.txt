@@ -9,9 +9,12 @@ Rodar a aplicação Back end
 Python app.py
 
 Rodar os testes
-pytest tests/test_cliente_dao.py -v
-pytest tests/test_funcionario_dao.py -v
-pytest tests/test_produto_dao.py -v
-pytest tests/test_venda_dao.py -v
-pytest tests/test_devolucao_dao.py -v
-pytest tests/test_transacoes_dao.py -v
+pytest tests/test_cliente_dao_completo.py -v
+pytest tests/test_funcionario_dao_completo.py -v
+pytest tests/test_produto_dao_completo.py -v
+pytest tests/test_fornecedor_dao_completo.py
+pytest tests/test_compra_dao_completa.py -v
+pytest tests/test_venda_dao_transacao.py -v
+pytest tests/test_auth_controller.py -v
+pytest tests/test_devocao_item.py -v
+pytest tests/test_cupom_dao.py -v

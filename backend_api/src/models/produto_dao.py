@@ -13,25 +13,35 @@ class ProdutoDAO:
         self.table_name = "produto"
     
     # -----------------------------------------------------------------
-    # R - READ (Busca) - CORRIGIDO (Adicionando find_by_id)
+    # R - READ (Busca) - MÉTODOS CORRIGIDOS
     # -----------------------------------------------------------------
     
-    def find_all(self):
-        """ Retorna todos os produtos do banco, incluindo a quantidade do estoque. """
+    def find_all(self, termo_busca=None):
+        """ Retorna todos os produtos, opcionalmente filtrando por nome ou codigo_barras. """
         conn = None
+        params = []
         try:
             conn = get_db_connection()
             with conn.cursor() as cur:
-                # SQL: Adiciona LEFT JOIN com a tabela 'estoque'
                 sql = f"""
                     SELECT 
                         p.codigo_produto, p.nome, p.descricao, p.preco, p.codigo_barras, 
                         COALESCE(e.quantidade, 0) AS quantidade
                     FROM {self.table_name} p
                     LEFT JOIN estoque e ON p.codigo_produto = e.codigo_produto
-                    ORDER BY p.codigo_produto;
                 """
-                cur.execute(sql)
+
+                if termo_busca:
+                    # Se houver termo de busca, adiciona a cláusula WHERE
+                    termo_like = f"%{termo_busca.lower()}%"
+                    sql += """
+                        WHERE LOWER(p.nome) LIKE %s OR p.codigo_barras LIKE %s
+                    """
+                    params.extend([termo_like, termo_like])
+                
+                sql += " ORDER BY p.codigo_produto;"
+
+                cur.execute(sql, params) 
                 
                 columns = [desc[0] for desc in cur.description]
                 return [dict(zip(columns, row)) for row in cur.fetchall()]
@@ -42,14 +52,24 @@ class ProdutoDAO:
             if conn:
                 conn.close()
 
-    def find_by_id(self, codigo_produto: int): # <--- MÉTODO QUE FALTAVA!
-        """ Retorna um produto pelo seu código. """
+    def find_by_id(self, codigo_produto: int):
+        """ Retorna um produto pelo seu código, INCLUINDO ESTOQUE. """
         conn = None
         try:
             conn = get_db_connection()
             with conn.cursor() as cur:
-                cur.execute(f'SELECT "codigo_produto", "nome", "descricao", "preco", "codigo_barras" FROM {self.table_name} WHERE "codigo_produto" = %s', (codigo_produto,))
+                # SQL: Adiciona LEFT JOIN e COALESCE para buscar a quantidade (CORREÇÃO DE KEYERROR)
+                sql = """
+                    SELECT 
+                        p.codigo_produto, p.nome, p.descricao, p.preco, p.codigo_barras, 
+                        COALESCE(e.quantidade, 0) AS quantidade
+                    FROM produto p
+                    LEFT JOIN estoque e ON p.codigo_produto = e.codigo_produto
+                    WHERE p.codigo_produto = %s;
+                """
+                cur.execute(sql, (codigo_produto,))
                 row = cur.fetchone()
+                
                 if row is None:
                     return None
                 
@@ -62,8 +82,38 @@ class ProdutoDAO:
             if conn:
                 conn.close()
 
+    def find_by_codigo_barras(self, codigo_barras: str): # <--- MÉTODO FALTANTE ADICIONADO
+        """ Retorna um produto pelo seu código de barras (chave de negócio). """
+        conn = None
+        try:
+            conn = get_db_connection()
+            with conn.cursor() as cur:
+                # O JOIN é necessário para retornar a quantidade do estoque junto
+                sql = """
+                    SELECT 
+                        p.codigo_produto, p.nome, p.descricao, p.preco, p.codigo_barras, 
+                        COALESCE(e.quantidade, 0) AS quantidade
+                    FROM produto p
+                    LEFT JOIN estoque e ON p.codigo_produto = e.codigo_produto
+                    WHERE p.codigo_barras = %s;
+                """
+                cur.execute(sql, (codigo_barras,))
+                row = cur.fetchone()
+                
+                if row is None:
+                    return None
+                
+                columns = [desc[0] for desc in cur.description]
+                return dict(zip(columns, row))
+        except Exception as e:
+            logger.error(f"Erro ao buscar produto por código de barras {codigo_barras}: {e}")
+            return None
+        finally:
+            if conn:
+                conn.close()
+
     # -----------------------------------------------------------------
-    # C - CREATE (Inserção) - NOMENCLATURA EM INGLÊS MANTIDA
+    # C - CREATE (Inserção) - MANTIDO
     # -----------------------------------------------------------------
 
     def insert(self, nome: str, descricao: str, preco: str, codigo_barras: str = None, initial_quantity: int = DEFAULT_INITIAL_QUANTITY):
@@ -106,7 +156,7 @@ class ProdutoDAO:
                 conn.close()
 
     # -----------------------------------------------------------------
-    # U - UPDATE (Atualização) - NOMENCLATURA EM INGLÊS MANTIDA
+    # U - UPDATE (Atualização) - MANTIDO
     # -----------------------------------------------------------------
 
     def update(self, codigo_produto: int, **kwargs):
@@ -149,7 +199,7 @@ class ProdutoDAO:
                 conn.close()
                 
     # -----------------------------------------------------------------
-    # D - DELETE (Exclusão) - NOMENCLATURA EM INGLÊS MANTIDA
+    # D - DELETE (Exclusão) - MANTIDO
     # -----------------------------------------------------------------
 
     def delete(self, codigo_produto: int):
