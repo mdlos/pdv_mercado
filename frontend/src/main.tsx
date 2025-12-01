@@ -10,6 +10,7 @@ import Header from './shared/components/Header';
 import SideBar from './shared/components/SideBar';
 import { DrawerProvider } from './shared/contexts';
 import { BrowserRouter } from 'react-router-dom';
+import { AppRoutes } from './routes';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -19,6 +20,7 @@ createRoot(document.getElementById('root')!).render(
           {/* <Login /> */}
           <Header />
           <SideBar />
+          <AppRoutes />
         </DrawerProvider>
       </BrowserRouter>
     </ThemeProvider>

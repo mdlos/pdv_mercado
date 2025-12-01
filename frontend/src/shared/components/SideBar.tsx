@@ -1,19 +1,21 @@
-import { List, Drawer, Box, Icon, ListItemButton, ListItemIcon, ListItemText, useTheme, useMediaQuery, Button } from "@mui/material";
-import HomeIcon from '@mui/icons-material/Home';
-import { useNavigate } from "react-router-dom";
+import { List, Drawer, Box, ListItemButton, ListItemIcon, ListItemText, useTheme, useMediaQuery } from "@mui/material";
+import { useMatch, useNavigate, useResolvedPath } from "react-router-dom";
 import { useDrawerContext } from "../contexts/DrawerContext";
 
 import React from "react";
 
 interface IListItemLinkProps {
-  to: String;
+  to: string;
   label: string;
-  icon: String;
+  icon: React.ReactNode;
   onClick?: () => void | undefined;
 }
 
 const ListItemLink: React.FC<IListItemLinkProps> = ({ to, label, icon, onClick }) => {
   const navigate = useNavigate();
+
+  const resolvedPath = useResolvedPath(to);
+  const match = useMatch({ path: resolvedPath.pathname, end: false });
 
   const handleClick = () => {
     navigate(to as string);
@@ -21,9 +23,9 @@ const ListItemLink: React.FC<IListItemLinkProps> = ({ to, label, icon, onClick }
   };
     
   return (
-    <ListItemButton onClick={handleClick}>
-      <ListItemIcon>
-          <Icon>{icon}</Icon>
+    <ListItemButton selected={!!match} onClick={handleClick} className="flex flex-rows items-center gap-2">
+      <ListItemIcon className="ml-4">
+        {icon}
       </ListItemIcon>
       <ListItemText primary={label} />
     </ListItemButton>
@@ -34,7 +36,7 @@ const SideBar: React.FC = ({  }) => {
   const theme = useTheme();
   const smDown = useMediaQuery(theme.breakpoints.down("sm"));
   
-  const { isDrawerOpen, toggleDrawerOpen } = useDrawerContext();
+  const { isDrawerOpen, toggleDrawerOpen, drawerOptions } = useDrawerContext();
 
   return (
     <>
@@ -48,18 +50,22 @@ const SideBar: React.FC = ({  }) => {
           marginTop: "100px",               // altura da AppBar
           height: "calc(100% - 100px)",     // evita sobrepor o rodapé
           width: theme.spacing(32),
+          overflow: "hidden",
         },
       }}>
         <Box 
           width={theme.spacing(32)} 
           className="relative flex flex-col h-full justify-start items-center">
           <List component="nav" className="w-full">
-            <ListItemButton>
-              <ListItemIcon>
-                <HomeIcon />
-              </ListItemIcon>
-              <ListItemText primary="Página Inicial" />
-            </ListItemButton>  
+            {drawerOptions.map(drawerOption => (
+              <ListItemLink 
+                to={drawerOption.path}
+                key={drawerOption.path}
+                icon={drawerOption.icon}
+                label={drawerOption.label}
+                onClick={smDown ? toggleDrawerOpen : undefined}
+              /> 
+            ))}
           </List>
         </Box>
       </Drawer>
