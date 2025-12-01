@@ -44,6 +44,16 @@ CREATE TABLE IF NOT EXISTS tipo_pagamento (
     id_tipo INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     descricao VARCHAR(50) UNIQUE NOT NULL
 );
+-- INSERIR DADOS VIA SQL JÁ QUE ELES SÃO FIXO.
+INSERT INTO tipo_pagamento (descricao) VALUES 
+('Dinheiro'),
+('Cartão Débito'),
+('Cartão Crédito'),
+('PIX'),
+('Vale Credito'),
+('Outros')
+ON CONFLICT (descricao) DO NOTHING;
+
 
 -- =====================================================================================
 -- TIPO DE FUNCIONÁRIO
@@ -75,7 +85,7 @@ CREATE TABLE IF NOT EXISTS produto (
     nome VARCHAR(100) NOT NULL UNIQUE,
     descricao TEXT NOT NULL,
     preco DECIMAL(10, 2)  NOT NULL CHECK (preco > 0),
-	codigo_barras VARCHAR(50)  UNIQUE
+    codigo_barras VARCHAR(50)  UNIQUE
 );
 
 -- =====================================================================================
@@ -87,7 +97,7 @@ CREATE TABLE IF NOT EXISTS funcionario (
     email VARCHAR(100)  NOT NULL UNIQUE,
     senha VARCHAR(255) NOT NULL,
     nome VARCHAR(100) NOT NULL,
-    sobrenome VARCHAR(100), 
+    sobrenome VARCHAR(100) ,
     nome_social VARCHAR(100),
     telefone VARCHAR(15),
     id_tipo_funcionario INT NOT NULL
@@ -98,13 +108,15 @@ CREATE TABLE IF NOT EXISTS funcionario (
 -- =====================================================================================
 CREATE TABLE IF NOT EXISTS fluxo_caixa (
     id_fluxo INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    status VARCHAR(50) NOT NULL,
+    status VARCHAR(10) NOT NULL DEFAULT 'ABERTO' CHECK (status IN ('ABERTO', 'FECHADO')),
     saldo_inicial DECIMAL(10, 2) NOT NULL,
     saldo_final_informado DECIMAL(10, 2),
     data_hora_abertura TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     cpf_funcionario_abertura VARCHAR(11) NOT NULL,
-   data_hora_fechamento TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    data_hora_fechamento TIMESTAMP,
+    valor DECIMAL(10, 2) NOT NULL DEFAULT 0
 );
+
 
 -- =====================================================================================
 -- VENDA
@@ -113,8 +125,11 @@ CREATE TABLE IF NOT EXISTS venda (
     id_venda INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     data_venda TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     valor_total DECIMAL(10, 2) NOT NULL,
-    cpf_cliente VARCHAR(11), -- CPF opcional para venda rápida
-    id_cliente INT
+    cpf_cnpj_cliente VARCHAR(11), -- CPF opcional para venda rápida
+   status VARCHAR(10) NOT NULL DEFAULT 'Aprovada'
+           CHECK (status IN ('Aprovada', 'Cancelada')),
+    id_cliente INT,
+   cpf_funcionario VARCHAR(11)
 );
 
 -- =====================================================================================
@@ -198,13 +213,13 @@ CREATE TABLE IF NOT EXISTS compra_item (
 -- =====================================================================================
 CREATE TABLE IF NOT EXISTS estoque (
     codigo_produto INT PRIMARY KEY,
-    quantidade INT NOT NULL DEFAULT 0
+    quantidade INT NOT NULL DEFAULT 0 CHECK (quantidade >= 0)
 );
 
 -- =====================================================================================
 -- NOTA FISCAL
 -- =====================================================================================
-CREATE TABLE IF NOT EXISTS nota_fiscal (
+CREATE TABLE IF NOT EXISTS cupom (
     id_nf INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     numero_nf VARCHAR(50) UNIQUE NOT NULL,
     data_emissao DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -212,6 +227,58 @@ CREATE TABLE IF NOT EXISTS nota_fiscal (
     status VARCHAR(50) NOT NULL,
     id_venda INT UNIQUE NOT NULL
 );
+
+-- =====================================================================================
+-- ITEM NA NOTA 
+-- =====================================================================================
+
+CREATE TABLE IF NOT EXISTS item_cupom (
+    id_item_nf INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    -- Chave estrangeira ligando ao cabeçalho da nota
+    id_nota_fiscal INT NOT NULL,
+    -- Chave estrangeira ligando ao produto vendido
+    id_produto INT NOT NULL, 
+    
+    quantidade INT NOT NULL,
+    preco_unitario NUMERIC(10, 2) NOT NULL,
+    
+    -- Definindo as chaves estrangeiras
+    CONSTRAINT fk_nota_fiscal
+        FOREIGN KEY (id_nota_fiscal)
+        REFERENCES nota_fiscal (id_cupom)
+        ON DELETE CASCADE, -- Se a NF for deletada, os itens são deletados
+        
+    CONSTRAINT fk_produto
+        FOREIGN KEY (codigo_produto)
+        REFERENCES produto (codigo_produto) -- Supondo que sua tabela de produtos seja 'produto' com PK 'id_produto'
+);
+
+-- 3. Cria a nova tabela de itens, referenciando 'cupom'
+CREATE TABLE IF NOT EXISTS item_cupom (
+    id_item_cupom INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_cupom INT NOT NULL, 
+    id_produto INT NOT NULL, 
+    quantidade INT NOT NULL,
+    preco_unitario NUMERIC(10, 2) NOT NULL,
+    
+    CONSTRAINT fk_cupom
+        FOREIGN KEY (id_cupom)
+        REFERENCES cupom (id_cupom)
+        ON DELETE CASCADE,
+        
+    CONSTRAINT fk_produto
+        FOREIGN KEY (codigo_produto)
+        REFERENCES produto (codigo_produto)
+);
+
+
+        CREATE TABLE IF NOT EXISTS configuracao_mercado (
+            id_config INT PRIMARY KEY, -- Usar 1 para ter apenas uma linha de configuração
+            cnpj VARCHAR(18) UNIQUE NOT NULL,
+            razao_social VARCHAR(255) NOT NULL,
+            endereco TEXT,
+            contato VARCHAR(50)
+        );
 
 /* ============================================================
    As chaves estrangeiras foram declaradas como CONSTRAINTS
@@ -268,6 +335,15 @@ ADD CONSTRAINT fk_fluxo_caixa_funcionario_cpf
 FOREIGN KEY (cpf_funcionario_abertura)
 REFERENCES funcionario(cpf);
 
+-- =====================================================================================
+-- VENDA → FLUXO DE CAIXA
+-- =====================================================================================
+ALTER TABLE fluxo_caixa
+ADD CONSTRAINT fk_fluxo_venda
+FOREIGN KEY (id_venda)
+REFERENCES venda(id_venda)
+ON UPDATE CASCADE
+ON DELETE RESTRICT;
 
 -- =====================================================================================
 -- VENDA → CLIENTE
@@ -276,6 +352,14 @@ ALTER TABLE venda
 ADD CONSTRAINT fk_venda_cliente
 FOREIGN KEY (id_cliente)
 REFERENCES cliente(id_cliente);
+
+-- =====================================================================================
+-- VENDA → FUNCIONARIO
+-- =====================================================================================
+ALTER TABLE venda
+ADD CONSTRAINT fk_venda_funcionario_cpf
+FOREIGN KEY (cpf_funcionario)
+REFERENCES funcionario(cpf);
 
 
 -- =====================================================================================
@@ -383,17 +467,3 @@ ADD CONSTRAINT fk_nota_fiscal_venda
 FOREIGN KEY (id_venda)
 REFERENCES venda(id_venda);
 
--- =====================================================================================
-INSERT INTO tipo_funcionario (cargo) VALUES ('Gerente') ON CONFLICT (cargo) DO NOTHING;
-INSERT INTO tipo_funcionario (cargo) VALUES ('Caixa') ON CONFLICT (cargo) DO NOTHING;
--- ===================================================================================== 
-
---  =====================================================================================
---Cadastrar formas de pagamentos)
-INSERT INTO tipo_pagamento (descricao) VALUES ('Dinheiro') ON CONFLICT (descricao) DO NOTHING;
-INSERT INTO tipo_pagamento (descricao) VALUES ('Cartão Débito') ON CONFLICT (descricao) DO NOTHING;
-INSERT INTO tipo_pagamento (descricao) VALUES ('Cartão Crédito') ON CONFLICT (descricao) DO NOTHING;
-INSERT INTO tipo_pagamento (descricao) VALUES ('PIX') ON CONFLICT (descricao) DO NOTHING;
-INSERT INTO tipo_pagamento (descricao) VALUES ('Vale Credito') ON CONFLICT (descricao) DO NOTHING;
-INSERT INTO tipo_pagamento (descricao) VALUES ('Outros') ON CONFLICT (descricao) DO NOTHING;
--- =====================================================================================
