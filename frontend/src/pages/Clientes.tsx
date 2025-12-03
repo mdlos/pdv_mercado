@@ -19,6 +19,9 @@ const Clientes = () => {
         estado: ''
     });
 
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+
     const columns: IColumn[] = useMemo(() => [
         { id: 'cpf', label: 'CPF', minWidth: 100 },
         { id: 'nome', label: 'Nome Completo', minWidth: 170 },
@@ -35,6 +38,14 @@ const Clientes = () => {
     const rows = [
         { id: 1, cpf: '123.456.789-00', nome: 'João da Silva', email: 'joao@email.com', celular: '(11) 99999-9999' },
         { id: 2, cpf: '987.654.321-11', nome: 'Maria Oliveira', email: 'maria@email.com', celular: '(21) 88888-8888' },
+        { id: 3, cpf: '987.654.321-11', nome: 'Maria Oliveira', email: 'maria@email.com', celular: '(21) 88888-8888' },
+        { id: 4, cpf: '987.654.321-11', nome: 'Maria Oliveira', email: 'maria@email.com', celular: '(21) 88888-8888' },
+        { id: 5, cpf: '987.654.321-11', nome: 'Maria Oliveira', email: 'maria@email.com', celular: '(21) 88888-8888' },
+        { id: 6, cpf: '987.654.321-11', nome: 'Maria Oliveira', email: 'maria@email.com', celular: '(21) 88888-8888' },
+        { id: 7, cpf: '987.654.321-11', nome: 'Maria Oliveira', email: 'maria@email.com', celular: '(21) 88888-8888' },
+        { id: 8, cpf: '987.654.321-11', nome: 'Maria Oliveira', email: 'maria@email.com', celular: '(21) 88888-8888' },
+        { id: 9, cpf: '987.654.321-11', nome: 'Maria Oliveira', email: 'maria@email.com', celular: '(21) 88888-8888' },
+        { id: 10, cpf: '987.654.321-11', nome: 'Maria Oliveira', email: 'maria@email.com', celular: '(21) 88888-8888' },
     ];
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -61,16 +72,33 @@ const Clientes = () => {
         setOpen(false);
     };
 
+    const handleChangePage = (newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (newRowsPerPage: number) => {
+        setRowsPerPage(newRowsPerPage);
+        setPage(0);
+    };
+
     return (
         <LayoutBase titulo={"Clientes"}>
             <Box className="mb-4">
-                <ListTable columns={columns} rows={rows} />
+                <ListTable
+                    columns={columns}
+                    rows={rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)}
+                    totalCount={rows.length}
+                    page={page}
+                    rowsPerPage={rowsPerPage}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
             </Box>
 
             <FormRegister
                 title="Cadastro de Usuário"
                 buttons={[
-                    <Button key="reset" variant="outlined" color="error" onClick={handleReset}>Resetar</Button>,
+                    <Button key="reset" variant="outlined" color="warning" onClick={handleReset}>Resetar</Button>,
                     <Button key="save" variant="contained" color="primary" onClick={handleSave}>Salvar</Button>,
                 ]}
                 open={open}

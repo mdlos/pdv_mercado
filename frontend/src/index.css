@@ -3,7 +3,8 @@
 :root {
   --principal-color: #4487F4;
   --secondary-color: #67CDF2;
-  --background-color: #071827;
+  --background-color: #2a2a2f;
+  --background-color-secondary: #071827;
 
   --btn-principal: var(--principal-color);
   --btn-secondary: var(--secondary-color);
@@ -29,8 +30,13 @@
 body {
   font-family: 'Roboto', sans-serif;
   height: 100vh;
+  width: 100%;
   display: flex;
   margin: 0;
   padding: 0;
   background-color: var(--background-color);
+}
+
+#root {
+  width: 100%;
 }

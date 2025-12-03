@@ -34,7 +34,7 @@ const Login = () => {
         <div className="flex flex-col items-center justify-center"
           style={{
             position: "relative",
-            backgroundColor: "var(--background-color)",
+            backgroundColor: "var(--background-color-secondary)",
             borderRadius: "10px",
             boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
             padding: "10vh",

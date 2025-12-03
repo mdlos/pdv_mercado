@@ -21,7 +21,7 @@ const Header = () => {
       style={{
         position: "fixed",
         zIndex: 1000,
-        backgroundColor: "var(--background-color)",
+        backgroundColor: "var(--background-color-secondary)",
         height: "100px",
       }}>
       <div className="flex flex-row items-center">

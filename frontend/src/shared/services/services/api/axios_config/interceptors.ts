@@ -1,5 +1,5 @@
 import { AxiosError, type AxiosResponse } from 'axios';
-import { Environment } from '../../../environment';
+import { Environment } from '../../../../environment';
 
 export const errorInterceptor = (error: AxiosError) => {
     if (error.message === 'Network Error') {

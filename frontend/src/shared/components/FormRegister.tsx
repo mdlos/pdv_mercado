@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Box, Button, Typography, Modal, useMediaQuery, type Theme } from '@mui/material';
+import { Box, Typography, Modal, useMediaQuery, type Theme, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 const style = {
     position: 'absolute',
@@ -9,7 +10,6 @@ const style = {
     width: '40vw',
     minWidth: '400px',
     bgcolor: 'background.paper',
-    border: '2px solid #000',
     borderRadius: '10px',
     boxShadow: 24,
     p: 4,
@@ -39,14 +39,18 @@ const FormRegister: React.FC<IFormRegisterProps> = ({ title, children, buttons, 
                         <Typography id="modal-modal-title" color="textPrimary" variant="h5" component="h2">
                             {title}
                         </Typography>
-                        <Button onClick={onClose}>X</Button>
+                        <IconButton color="error" onClick={onClose}>
+                            <CloseIcon />
+                        </IconButton>
                     </Box>
                 ) : (
                     <Box className="flex flex-row justify-between">
                         <Typography id="modal-modal-title" color="textPrimary" variant="h6" component="h2">
                             {title}
                         </Typography>
-                        <Button onClick={onClose}>X</Button>
+                        <IconButton color="error" onClick={onClose}>
+                            <CloseIcon />
+                        </IconButton>
                     </Box>
                 )}
                 <Box className="flex flex-col">
