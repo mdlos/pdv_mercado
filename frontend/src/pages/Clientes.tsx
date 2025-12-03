@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, useMemo } from 'react';
 import { LayoutBase } from "../shared/layouts/LayoutBase";
 import FormRegister from "../shared/components/FormRegister";
 import { ListTable, type IColumn } from "../shared/components/ListTable";
+import { Filters } from "../shared/components/Filters";
 import { Button, Fab, TextField, Box } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 
@@ -81,8 +82,20 @@ const Clientes = () => {
         setPage(0);
     };
 
+    const handleSearch = (filters: any) => {
+        console.log("Filtrando por:", filters);
+        // Implementar lógica de filtro aqui
+    };
+
+    const handleClear = () => {
+        console.log("Filtros limpos");
+        // Implementar lógica de limpar filtros aqui
+    };
+
     return (
         <LayoutBase titulo={"Clientes"}>
+            <Filters onSearch={handleSearch} onClear={handleClear} />
+
             <Box className="mb-4">
                 <ListTable
                     columns={columns}

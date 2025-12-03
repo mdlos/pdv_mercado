@@ -8,7 +8,8 @@ import {
     Paper,
     Typography,
     TablePagination,
-    LinearProgress
+    LinearProgress,
+    Box
 } from '@mui/material';
 import type { ReactNode } from 'react';
 
@@ -65,7 +66,7 @@ export const ListTable = <T extends { id?: string | number } | any>({
                 {isLoading && <LinearProgress />}
                 <Table stickyHeader aria-label="custom table">
                     <TableHead>
-                        <TableRow>
+                        <TableRow sx={{ backgroundColor: 'var(--principal-color)' }}>
                             {columns.map((column) => (
                                 <TableCell
                                     key={column.id}
@@ -108,17 +109,19 @@ export const ListTable = <T extends { id?: string | number } | any>({
                     </TableBody>
                 </Table>
             </TableContainer>
-            <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                component="div"
-                count={totalCount}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={(_, newPage) => onPageChange(newPage)}
-                onRowsPerPageChange={(event) => onRowsPerPageChange(parseInt(event.target.value, 10))}
-                labelRowsPerPage="Linhas por página:"
-                labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count !== -1 ? count : `mais de ${to}`}`}
-            />
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <TablePagination
+                    rowsPerPageOptions={[5]}
+                    component="div"
+                    count={totalCount}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={(_, newPage) => onPageChange(newPage)}
+                    onRowsPerPageChange={(event) => onRowsPerPageChange(parseInt(event.target.value, 10))}
+                    labelRowsPerPage="Linhas por página:"
+                    labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count !== -1 ? count : `mais de ${to}`}`}
+                />
+            </Box>
         </Paper>
     );
 };
