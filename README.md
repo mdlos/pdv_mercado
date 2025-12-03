@@ -221,6 +221,8 @@ Frontend (React ou equivalente):\
 Banco de dados:\
 PostgreSQL rodando em localhost:5432
 
+OBS: O sistema pode ser usando com o Docker via conteiners conforme descrito ou s/ o Docker rodando os scripts Python!
+
 ## 💻 Desenvolvedores
  
 <table>
