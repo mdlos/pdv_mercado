@@ -15,6 +15,7 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import Home from '../pages/Home';
 import Login from "../pages/Login";
 import FrenteDeCaixa from "../pages/FrenteDeCaixa";
+import Clientes from "../pages/Clientes";
 import Layout from "../shared/layouts/Layout";
 
 export const AppRoutes = () => {
@@ -58,21 +59,21 @@ export const AppRoutes = () => {
   return (
     <Routes>
       <Route path={Environment.ROTA_LOGIN} element={<Login />} />
-      
+
       <Route path={Environment.ROTA_FRENTE_DE_CAIXA} element={
         // <PrivateRoute>
-          <FrenteDeCaixa />
+        <FrenteDeCaixa />
         // </PrivateRoute>  
-      }/>
+      } />
 
       {/* Rota dos elementos da drawer */}
       <Route path={Environment.ROTA_INICIAL} element={
         // <PrivateRoute>
-          <Layout><Home /></Layout>
+        <Layout><Home /></Layout>
         // </PrivateRoute>
-      }/>
+      } />
 
-      <Route path={Environment.ROTA_CLIENTES} element={<Layout><div>Clientes</div></Layout>} />
+      <Route path={Environment.ROTA_CLIENTES} element={<Layout><Clientes /></Layout>} />
       <Route path={Environment.ROTA_PRODUTOS} element={<Layout><div>Produtos</div></Layout>} />
       <Route path={Environment.ROTA_VENDAS} element={<Layout><div>Vendas</div></Layout>} />
       <Route path={Environment.ROTA_FUNCIONARIOS} element={<Layout><div>Funcionários</div></Layout>} />
