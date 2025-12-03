@@ -7,7 +7,7 @@ const style = {
     left: '50%',
     transform: 'translate(-50%, -50%)',
     width: '40vw',
-    minWidth: '500px',
+    minWidth: '400px',
     bgcolor: 'background.paper',
     border: '2px solid #000',
     borderRadius: '10px',
@@ -24,7 +24,6 @@ interface IFormRegisterProps {
 }
 
 const FormRegister: React.FC<IFormRegisterProps> = ({ title, children, buttons, open, onClose }) => {
-    const smUp = useMediaQuery((theme: Theme) => theme.breakpoints.up("sm"));
     const smUpMd = useMediaQuery((theme: Theme) => theme.breakpoints.up("md"));
 
     return (
