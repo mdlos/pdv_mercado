@@ -5,12 +5,7 @@ import { ThemeProvider } from '@emotion/react';
 
 import './index.css';
 
-
-import Header from './shared/components/Header';
-import SideBar from './shared/components/SideBar';
-// import Login from './pages/login';
-
-import { DrawerProvider } from './shared/contexts';
+import { DrawerProvider, AuthProvider, CaixaProvider } from './shared/contexts';
 import { BrowserRouter } from 'react-router-dom';
 import { AppRoutes } from './routes';
 
@@ -19,12 +14,13 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider theme={Theme}>
       <BrowserRouter>
-        <DrawerProvider>
-          {/* <Login /> */}
-          <Header />
-          <SideBar />
-          <AppRoutes />
-        </DrawerProvider>
+        <AuthProvider>
+          <CaixaProvider>
+            <DrawerProvider>
+              <AppRoutes />
+            </DrawerProvider>
+          </CaixaProvider>
+        </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>
   </StrictMode>,

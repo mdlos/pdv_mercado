@@ -12,6 +12,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <SideBar /> {/* Sidebar fixa na lateral */}
       <main
         style={{
+          display: "flex",
           marginTop: "100px", // Espaço para a Header
           marginLeft: isDrawerOpen ? "256px" : "0px", // Ajusta dinamicamente com base na sidebar
           transition: "margin-left 0.3s", // Animação suave

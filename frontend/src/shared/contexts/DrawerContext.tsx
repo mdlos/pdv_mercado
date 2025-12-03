@@ -18,7 +18,7 @@ const DrawerContext = createContext<IDrawerContextData>({} as IDrawerContextData
 export const useDrawerContext = () => {
   const context = useContext(DrawerContext);
   if (!context) {
-    throw new Error("useDrawerContext must be used within a DrawerProvider");
+    throw new Error("useDrawerContext deve ser usado dentro de um DrawerProvider");
   }
   return context;
 }
