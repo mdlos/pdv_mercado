@@ -9,6 +9,7 @@ import { Button, Fab, TextField, Box, LinearProgress } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import { FuncionarioService, type IDetalheFuncionario } from '../shared/services/services/api';
 
+// Fixed Funcionarios Component
 const Funcionarios = () => {
     const [open, setOpen] = useState(false);
     const [openConfirm, setOpenConfirm] = useState(false);
@@ -41,7 +42,7 @@ const Funcionarios = () => {
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [busca, setBusca] = useState({ cpf: '', nome: '', telefone: '' });
 
-    const columns: IColumn<IDetalheFuncionario>[] = useMemo(() => [
+    const columns: IColumn[] = useMemo(() => [
         { id: 'cpf', label: 'CPF', minWidth: 100 },
         {
             id: 'nome',

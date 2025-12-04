@@ -19,7 +19,7 @@ export interface IDetalheFuncionario extends IFuncionario {
     // CPF já está na interface base
 }
 
-type TFuncionarioComTotalCount = {
+export type TFuncionarioComTotalCount = {
     data: IDetalheFuncionario[];
     totalCount: number;
 }

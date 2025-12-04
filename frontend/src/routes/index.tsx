@@ -1,7 +1,6 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useDrawerContext } from "../shared/contexts";
-import { useAuthContext } from "../shared/contexts";
-import { PrivateRoute } from "../shared/contexts/PrivateRoute";
 import { useEffect } from "react";
 import { Environment } from "../shared/environment";
 
@@ -19,6 +18,7 @@ import Clientes from "../pages/Clientes";
 import Layout from "../shared/layouts/Layout";
 import Produtos from "../pages/Produtos";
 import Funcionarios from "../pages/Funcionarios";
+import Vendas from "../pages/Vendas";
 
 export const AppRoutes = () => {
   const { setDrawerOptions } = useDrawerContext();
@@ -77,7 +77,7 @@ export const AppRoutes = () => {
 
       <Route path={Environment.ROTA_CLIENTES} element={<Layout><Clientes /></Layout>} />
       <Route path={Environment.ROTA_PRODUTOS} element={<Layout><Produtos /></Layout>} />
-      <Route path={Environment.ROTA_VENDAS} element={<Layout><div>Vendas</div></Layout>} />
+      <Route path={Environment.ROTA_VENDAS} element={<Layout><Vendas /></Layout>} />
       <Route path={Environment.ROTA_FUNCIONARIOS} element={<Layout><Funcionarios /></Layout>} />
       <Route path={Environment.ROTA_CAIXAS} element={<Layout><div>Caixas</div></Layout>} />
       <Route path={Environment.ROTA_FRENTE_DE_CAIXA} element={<FrenteDeCaixa />} />
