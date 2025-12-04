@@ -1,7 +1,7 @@
 import { Api } from '../axios_config';
 
 export interface ILocalizacao {
-    [key: string]: any; // Definir campos específicos se conhecidos
+    [key: string]: any;
 }
 
 export interface ICliente {
@@ -30,7 +30,7 @@ const getAll = async (): Promise<TClienteComTotalCount | Error> => {
         if (data) {
             return {
                 data: data,
-                totalCount: data.length, // Ajustar se a API retornar paginação
+                totalCount: data.length,
             };
         }
 

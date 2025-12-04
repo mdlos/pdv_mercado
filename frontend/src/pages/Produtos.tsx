@@ -1,20 +1,26 @@
-import { useState, type ChangeEvent, useMemo } from 'react';
+import { useState, useEffect, useMemo, type ChangeEvent } from 'react';
 import { LayoutBase } from "../shared/layouts/LayoutBase";
 import FormRegister from "../shared/components/FormRegister";
 import { ListTable, type IColumn } from "../shared/components/ListTable";
 import { Filters } from "../shared/components/Filters";
 import { Confirmar } from "../shared/components/Confirmar";
-import { Button, Fab, TextField, Box } from "@mui/material";
+import { Button, Fab, TextField, Box, LinearProgress } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
+import { ProdutoService, type IDetalheProduto } from '../shared/services/services/api';
 
 const Produtos = () => {
     const [open, setOpen] = useState(false);
     const [openConfirm, setOpenConfirm] = useState(false);
-    const [idToDelete, setIdToDelete] = useState<number | string | null>(null);
+    const [idToDelete, setIdToDelete] = useState<number | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Dados da tabela
+    const [rows, setRows] = useState<IDetalheProduto[]>([]);
+    const [totalCount, setTotalCount] = useState(0);
+
     const [formData, setFormData] = useState({
         id: '',
         nome: '',
-        descricao: '',
         preco: '',
         codigoBarras: '',
         estoque: ''
@@ -22,29 +28,54 @@ const Produtos = () => {
 
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [busca, setBusca] = useState({ id: '', nome: '', codigoBarras: '' });
 
     const columns: IColumn[] = useMemo(() => [
-        { id: 'id', label: 'ID', minWidth: 100 },
-        { id: 'nome', label: 'Nome', minWidth: 100 },
-        { id: 'descricao', label: 'Descrição', minWidth: 100 },
-        { id: 'preco', label: 'Preço', minWidth: 100 },
-        { id: 'codigoBarras', label: 'Código de Barras', minWidth: 100 },
-        { id: 'estoque', label: 'Estoque', minWidth: 100 },
+        { id: 'id_produto', label: 'ID', minWidth: 50 },
+        { id: 'nome', label: 'Nome', minWidth: 150 },
+        {
+            id: 'preco_venda',
+            label: 'Preço',
+            minWidth: 100,
+            render: (value) => `R$ ${Number(value).toFixed(2)}`
+        },
+        { id: 'codigo_barras', label: 'Código de Barras', minWidth: 120 },
+        { id: 'quantidade_estoque', label: 'Estoque', minWidth: 80 },
     ], []);
 
-    // Mock data for now, replace with API call later
-    const rows = [
-        { id: '1', nome: 'Produto 1', descricao: 'Descrição 1', preco: '10.00', codigoBarras: '123456789', estoque: '10' },
-        { id: '2', nome: 'Produto 2', descricao: 'Descrição 2', preco: '20.00', codigoBarras: '987654321', estoque: '20' },
-        { id: '3', nome: 'Produto 3', descricao: 'Descrição 3', preco: '30.00', codigoBarras: '111111111', estoque: '30' },
-        { id: '4', nome: 'Produto 4', descricao: 'Descrição 4', preco: '40.00', codigoBarras: '222222222', estoque: '40' },
-        { id: '5', nome: 'Produto 5', descricao: 'Descrição 5', preco: '50.00', codigoBarras: '333333333', estoque: '50' },
-        { id: '6', nome: 'Produto 6', descricao: 'Descrição 6', preco: '60.00', codigoBarras: '444444444', estoque: '60' },
-        { id: '7', nome: 'Produto 7', descricao: 'Descrição 7', preco: '70.00', codigoBarras: '555555555', estoque: '70' },
-        { id: '8', nome: 'Produto 8', descricao: 'Descrição 8', preco: '80.00', codigoBarras: '666666666', estoque: '80' },
-        { id: '9', nome: 'Produto 9', descricao: 'Descrição 9', preco: '90.00', codigoBarras: '777777777', estoque: '90' },
-        { id: '10', nome: 'Produto 10', descricao: 'Descrição 10', preco: '100.00', codigoBarras: '888888888', estoque: '100' },
-    ];
+    // Função para buscar dados
+    const fetchData = () => {
+        setIsLoading(true);
+        ProdutoService.getAll()
+            .then((result) => {
+                if (result instanceof Error) {
+                    alert(result.message);
+                } else {
+                    let filteredData = result.data;
+
+                    if (busca.nome) {
+                        filteredData = filteredData.filter(item => item.nome.toLowerCase().includes(busca.nome.toLowerCase()));
+                    }
+                    if (busca.codigoBarras) {
+                        filteredData = filteredData.filter(item => item.codigo_barras.includes(busca.codigoBarras));
+                    }
+                    if (busca.id) {
+                        filteredData = filteredData.filter(item => String(item.id_produto) === busca.id);
+                    }
+
+                    setTotalCount(filteredData.length);
+
+                    const start = page * rowsPerPage;
+                    const end = start + rowsPerPage;
+                    setRows(filteredData.slice(start, end));
+                }
+            })
+            .finally(() => setIsLoading(false));
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, [page, rowsPerPage, busca]);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -55,7 +86,6 @@ const Produtos = () => {
         setFormData({
             id: '',
             nome: '',
-            descricao: '',
             preco: '',
             codigoBarras: '',
             estoque: ''
@@ -63,9 +93,44 @@ const Produtos = () => {
     };
 
     const handleSave = () => {
-        console.log("Dados salvos:", formData);
-        setOpen(false);
-        handleReset();
+        setIsLoading(true);
+
+        const dadosParaEnviar = {
+            nome: formData.nome,
+            preco_venda: Number(formData.preco.replace(',', '.')),
+            codigo_barras: formData.codigoBarras,
+            quantidade_estoque: Number(formData.estoque)
+        };
+
+        if (formData.id) {
+            // Edição
+            ProdutoService.updateById(Number(formData.id), dadosParaEnviar)
+                .then((result) => {
+                    if (result instanceof Error) {
+                        alert(result.message);
+                    } else {
+                        alert('Produto atualizado com sucesso!');
+                        setOpen(false);
+                        handleReset();
+                        fetchData();
+                    }
+                })
+                .finally(() => setIsLoading(false));
+        } else {
+            // Criação
+            ProdutoService.create(dadosParaEnviar)
+                .then((result) => {
+                    if (result instanceof Error) {
+                        alert(result.message);
+                    } else {
+                        alert('Produto cadastrado com sucesso!');
+                        setOpen(false);
+                        handleReset();
+                        fetchData();
+                    }
+                })
+                .finally(() => setIsLoading(false));
+        }
     };
 
     const handleChangePage = (newPage: number) => {
@@ -77,43 +142,86 @@ const Produtos = () => {
         setPage(0);
     };
 
-    const handleSearch = (filters: any) => {
-        console.log("Filtrando por:", filters);
-        // Implementar lógica de filtro aqui
+    const handleSearch = () => {
+        setPage(0);
+        fetchData();
     };
 
     const handleClear = () => {
-        console.log("Filtros limpos");
-        // Implementar lógica de limpar filtros aqui
+        setBusca({ id: '', nome: '', codigoBarras: '' });
+        setPage(0);
     };
 
-    const handleEdit = (row: any) => {
-        console.log("Editando produto:", row);
-        setFormData({ ...row }); // Preenche o formulário com os dados da linha
+    const handleEdit = (row: IDetalheProduto) => {
+        setFormData({
+            id: String(row.id_produto),
+            nome: row.nome,
+            preco: String(row.preco_venda),
+            codigoBarras: row.codigo_barras,
+            estoque: String(row.quantidade_estoque || 0)
+        });
         setOpen(true);
     };
 
-    const handleDeleteClick = (row: any) => {
-        setIdToDelete(row.id);
+    const handleDeleteClick = (row: IDetalheProduto) => {
+        setIdToDelete(row.id_produto);
         setOpenConfirm(true);
     };
 
     const handleConfirmDelete = () => {
-        console.log("Deletando produto ID:", idToDelete);
-        // Implementar lógica de deletar aqui
-        setOpenConfirm(false);
-        setIdToDelete(null);
+        if (idToDelete) {
+            setIsLoading(true);
+            ProdutoService.deleteById(idToDelete)
+                .then((result) => {
+                    if (result instanceof Error) {
+                        alert(result.message);
+                    } else {
+                        alert('Produto excluído com sucesso!');
+                        fetchData();
+                    }
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                    setOpenConfirm(false);
+                    setIdToDelete(null);
+                });
+        }
     };
 
     return (
         <LayoutBase titulo={"Produtos"}>
-            <Filters onSearch={handleSearch} onClear={handleClear} />
+            <Filters onSearch={handleSearch} onClear={handleClear}>
+                <Box sx={{ display: 'flex', gap: 2, width: '81%', flexWrap: 'wrap' }}>
+                    <TextField
+                        size="small"
+                        label="ID"
+                        value={busca.id}
+                        onChange={(e) => setBusca(prev => ({ ...prev, id: e.target.value }))}
+                        sx={{ width: '100px' }}
+                    />
+                    <TextField
+                        size="small"
+                        label="Nome"
+                        value={busca.nome}
+                        onChange={(e) => setBusca(prev => ({ ...prev, nome: e.target.value }))}
+                        sx={{ flex: 1, minWidth: '200px' }}
+                    />
+                    <TextField
+                        size="small"
+                        label="Cód. Barras"
+                        value={busca.codigoBarras}
+                        onChange={(e) => setBusca(prev => ({ ...prev, codigoBarras: e.target.value }))}
+                        sx={{ width: '200px' }}
+                    />
+                </Box>
+            </Filters>
 
             <Box className="mb-4">
+                {isLoading && <LinearProgress />}
                 <ListTable
                     columns={columns}
-                    rows={rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)}
-                    totalCount={rows.length}
+                    rows={rows}
+                    totalCount={totalCount}
                     page={page}
                     rowsPerPage={rowsPerPage}
                     onPageChange={handleChangePage}
@@ -127,7 +235,9 @@ const Produtos = () => {
                 title={formData.id ? "Editar Produto" : "Cadastro de Produto"}
                 buttons={[
                     <Button key="reset" variant="outlined" color="warning" onClick={handleReset}>Resetar</Button>,
-                    <Button key="save" variant="contained" color="primary" onClick={handleSave}>Salvar</Button>,
+                    <Button key="save" variant="contained" color="primary" onClick={handleSave} disabled={isLoading}>
+                        {isLoading ? 'Salvando...' : 'Salvar'}
+                    </Button>,
                 ]}
                 open={open}
                 onClose={() => {
@@ -144,24 +254,18 @@ const Produtos = () => {
                         label="Nome"
                         variant="outlined"
                         size='small'
-                    />
-                    <TextField
-                        name="descricao"
-                        value={formData.descricao}
-                        onChange={handleChange}
-                        id="outlined-basic-descricao"
-                        label="Descrição"
-                        variant="outlined"
-                        size='small'
+                        fullWidth
                     />
                     <TextField
                         name="preco"
                         value={formData.preco}
                         onChange={handleChange}
                         id="outlined-basic-preco"
-                        label="Preço"
+                        label="Preço (R$)"
                         variant="outlined"
                         size='small'
+                        type="number"
+                        inputProps={{ step: "0.01" }}
                     />
                     <TextField
                         name="codigoBarras"
@@ -177,12 +281,12 @@ const Produtos = () => {
                         value={formData.estoque}
                         onChange={handleChange}
                         id="outlined-basic-estoque"
-                        label="Estoque"
+                        label="Estoque Inicial"
                         variant="outlined"
                         size='small'
+                        type="number"
                     />
                 </Box>
-
             </FormRegister>
 
             <Confirmar

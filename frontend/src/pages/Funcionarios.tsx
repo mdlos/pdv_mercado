@@ -6,29 +6,32 @@ import { Filters } from "../shared/components/Filters";
 import { Confirmar } from "../shared/components/Confirmar";
 import { Button, Fab, TextField, Box, LinearProgress } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
-import { ClienteService, type IDetalheCliente } from '../shared/services/services/api';
+import { FuncionarioService, type IDetalheFuncionario } from '../shared/services/services/api';
 
-const Clientes = () => {
+const Funcionarios = () => {
     const [open, setOpen] = useState(false);
     const [openConfirm, setOpenConfirm] = useState(false);
     const [idToDelete, setIdToDelete] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     // Dados da tabela
-    const [rows, setRows] = useState<IDetalheCliente[]>([]);
+    const [rows, setRows] = useState<IDetalheFuncionario[]>([]);
     const [totalCount, setTotalCount] = useState(0);
 
     const [formData, setFormData] = useState({
         id: '',
-        nome: '',
         cpf: '',
         sexo: '',
-        celular: '',
         email: '',
+        senha: '',
+        nome: '',
+        sobrenome: '',
+        nomeSocial: '',
+        telefone: '',
         logradouro: '',
         numero: '',
         cidade: '',
-        estado: ''
+        estado: '',
     });
 
     const [page, setPage] = useState(0);
@@ -36,37 +39,42 @@ const Clientes = () => {
     const [busca, setBusca] = useState({ cpf: '', nome: '', telefone: '' });
 
     const columns: IColumn[] = useMemo(() => [
-        { id: 'cpf_cnpj', label: 'CPF', minWidth: 100 },
-        { id: 'nome', label: 'Nome Completo', minWidth: 170 },
-        { id: 'email', label: 'Email', minWidth: 170 },
-        { id: 'telefone', label: 'Telefone', minWidth: 100 },
+        { id: 'cpf', label: 'CPF', minWidth: 100 },
+        {
+            id: 'nome',
+            label: 'Nome Completo',
+            minWidth: 150,
+            render: (value, row) => `${row.nome} ${row.sobrenome}`
+        },
         { id: 'sexo', label: 'Sexo', minWidth: 100 },
-        // Campos aninhados de localização precisam de tratamento especial na renderização da tabela se ListTable não suportar acesso profundo
-        // Por enquanto, assumindo que ListTable renderiza o que está na raiz ou precisamos achatar os dados para a tabela
+        { id: 'nome_social', label: 'Nome Social', minWidth: 100 },
+        { id: 'telefone', label: 'Telefone', minWidth: 100 },
+        // Campos aninhados não são exibidos diretamente na tabela simples, mas estão nos dados
     ], []);
 
     // Função para buscar dados
     const fetchData = () => {
         setIsLoading(true);
-        // A API mockada getAll não aceita paginação real ainda, mas vamos preparar
-        ClienteService.getAll()
+        FuncionarioService.getAll()
             .then((result) => {
                 if (result instanceof Error) {
                     alert(result.message);
                 } else {
-                    // Filtragem local temporária até a API suportar filtros
                     let filteredData = result.data;
 
                     if (busca.nome) {
-                        filteredData = filteredData.filter(item => item.nome.toLowerCase().includes(busca.nome.toLowerCase()));
+                        const termo = busca.nome.toLowerCase();
+                        filteredData = filteredData.filter(item =>
+                            item.nome.toLowerCase().includes(termo) ||
+                            item.sobrenome.toLowerCase().includes(termo)
+                        );
                     }
                     if (busca.cpf) {
-                        filteredData = filteredData.filter(item => item.cpf_cnpj.includes(busca.cpf));
+                        filteredData = filteredData.filter(item => item.cpf.includes(busca.cpf));
                     }
 
                     setTotalCount(filteredData.length);
 
-                    // Paginação local
                     const start = page * rowsPerPage;
                     const end = start + rowsPerPage;
                     setRows(filteredData.slice(start, end));
@@ -77,7 +85,7 @@ const Clientes = () => {
 
     useEffect(() => {
         fetchData();
-    }, [page, rowsPerPage, busca]); // Recarrega quando paginação ou busca mudam
+    }, [page, rowsPerPage, busca]);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -87,15 +95,18 @@ const Clientes = () => {
     const handleReset = () => {
         setFormData({
             id: '',
-            nome: '',
             cpf: '',
             sexo: '',
-            celular: '',
             email: '',
+            senha: '',
+            nome: '',
+            sobrenome: '',
+            nomeSocial: '',
+            telefone: '',
             logradouro: '',
             numero: '',
             cidade: '',
-            estado: ''
+            estado: '',
         });
     };
 
@@ -104,10 +115,13 @@ const Clientes = () => {
 
         const dadosParaEnviar = {
             nome: formData.nome,
-            cpf_cnpj: formData.cpf,
+            sobrenome: formData.sobrenome,
+            nome_social: formData.nomeSocial,
+            cpf: formData.cpf,
             email: formData.email,
-            telefone: formData.celular,
+            telefone: formData.telefone,
             sexo: formData.sexo,
+            senha: formData.senha, // Envia senha apenas se preenchida ou na criação
             localizacao: {
                 logradouro: formData.logradouro,
                 numero: formData.numero,
@@ -118,12 +132,12 @@ const Clientes = () => {
 
         if (formData.id) {
             // Edição
-            ClienteService.updateById(Number(formData.id), dadosParaEnviar)
+            FuncionarioService.updateById(Number(formData.id), dadosParaEnviar)
                 .then((result) => {
                     if (result instanceof Error) {
                         alert(result.message);
                     } else {
-                        alert('Cliente atualizado com sucesso!');
+                        alert('Funcionário atualizado com sucesso!');
                         setOpen(false);
                         handleReset();
                         fetchData();
@@ -132,12 +146,12 @@ const Clientes = () => {
                 .finally(() => setIsLoading(false));
         } else {
             // Criação
-            ClienteService.create(dadosParaEnviar)
+            FuncionarioService.create(dadosParaEnviar)
                 .then((result) => {
                     if (result instanceof Error) {
                         alert(result.message);
                     } else {
-                        alert('Cliente cadastrado com sucesso!');
+                        alert('Funcionário cadastrado com sucesso!');
                         setOpen(false);
                         handleReset();
                         fetchData();
@@ -157,7 +171,7 @@ const Clientes = () => {
     };
 
     const handleSearch = () => {
-        setPage(0); // Volta para a primeira página ao buscar
+        setPage(0);
         fetchData();
     };
 
@@ -166,36 +180,39 @@ const Clientes = () => {
         setPage(0);
     };
 
-    const handleEdit = (row: IDetalheCliente) => {
+    const handleEdit = (row: IDetalheFuncionario) => {
         setFormData({
-            id: String(row.id_cliente),
-            nome: row.nome,
-            cpf: row.cpf_cnpj,
+            id: String(row.id_funcionario),
+            cpf: row.cpf,
             sexo: row.sexo || '',
-            celular: row.telefone || '',
-            email: row.email || '',
+            email: row.email,
+            senha: '', // Não preenche senha na edição por segurança
+            nome: row.nome,
+            sobrenome: row.sobrenome,
+            nomeSocial: row.nome_social || '',
+            telefone: row.telefone || '',
             logradouro: row.localizacao?.logradouro || '',
             numero: row.localizacao?.numero || '',
             cidade: row.localizacao?.cidade || '',
-            estado: row.localizacao?.estado || ''
+            estado: row.localizacao?.estado || '',
         });
         setOpen(true);
     };
 
-    const handleDeleteClick = (row: IDetalheCliente) => {
-        setIdToDelete(row.id_cliente);
+    const handleDeleteClick = (row: IDetalheFuncionario) => {
+        setIdToDelete(row.id_funcionario);
         setOpenConfirm(true);
     };
 
     const handleConfirmDelete = () => {
         if (idToDelete) {
             setIsLoading(true);
-            ClienteService.deleteById(idToDelete)
+            FuncionarioService.deleteById(idToDelete)
                 .then((result) => {
                     if (result instanceof Error) {
                         alert(result.message);
                     } else {
-                        alert('Cliente excluído com sucesso!');
+                        alert('Funcionário excluído com sucesso!');
                         fetchData();
                     }
                 })
@@ -208,7 +225,7 @@ const Clientes = () => {
     };
 
     return (
-        <LayoutBase titulo={"Clientes"}>
+        <LayoutBase titulo={"Funcionários"}>
             <Filters onSearch={handleSearch} onClear={handleClear}>
                 <Box sx={{ display: 'flex', gap: 2, width: '81%', flexWrap: 'wrap' }}>
                     <TextField
@@ -251,7 +268,7 @@ const Clientes = () => {
             </Box>
 
             <FormRegister
-                title={formData.id ? "Editar Cliente" : "Cadastro de Cliente"}
+                title={formData.id ? "Editar Funcionário" : "Cadastro de Funcionário"}
                 buttons={[
                     <Button key="reset" variant="outlined" color="warning" onClick={handleReset}>Resetar</Button>,
                     <Button key="save" variant="contained" color="primary" onClick={handleSave} disabled={isLoading}>
@@ -266,23 +283,64 @@ const Clientes = () => {
             >
                 <Box className="flex flex-col gap-4">
                     <TextField
-                        name="nome"
-                        value={formData.nome}
+                        name="cpf"
+                        value={formData.cpf}
                         onChange={handleChange}
-                        id="outlined-basic-nome"
-                        label="Nome Completo"
+                        id="outlined-basic-cpf"
+                        label="CPF"
                         variant="outlined"
                         size='small'
-                        fullWidth
                     />
-                    <Box className="flex flex-row justify-between gap-2 w-full">
+                    <TextField
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        id="outlined-basic-email"
+                        label="Email"
+                        variant="outlined"
+                        size='small'
+                    />
+                    <TextField
+                        name="senha"
+                        value={formData.senha}
+                        onChange={handleChange}
+                        id="outlined-basic-senha"
+                        label="Senha"
+                        type="password"
+                        variant="outlined"
+                        size='small'
+                        helperText={formData.id ? "Deixe em branco para manter a senha atual" : ""}
+                    />
+                    <Box className="flex flex-row gap-4">
                         <TextField
-                            name="cpf"
-                            value={formData.cpf}
+                            name="nome"
+                            value={formData.nome}
                             onChange={handleChange}
-                            id="outlined-basic-cpf"
-                            className="w-100"
-                            label="CPF"
+                            id="outlined-basic-nome"
+                            className="w-full"
+                            label="Nome"
+                            variant="outlined"
+                            size='small'
+                        />
+                        <TextField
+                            name="sobrenome"
+                            value={formData.sobrenome}
+                            onChange={handleChange}
+                            id="outlined-basic-sobrenome"
+                            className="w-full"
+                            label="Sobrenome"
+                            variant="outlined"
+                            size='small'
+                        />
+                    </Box>
+                    <Box className="flex flex-row gap-4">
+                        <TextField
+                            name="nomeSocial"
+                            value={formData.nomeSocial}
+                            onChange={handleChange}
+                            id="outlined-basic-nomeSocial"
+                            className="w-full"
+                            label="Nome Social"
                             variant="outlined"
                             size='small'
                         />
@@ -297,35 +355,22 @@ const Clientes = () => {
                             size='small'
                         />
                     </Box>
-                    <Box className="flex flex-row justify-between gap-2 w-full">
-                        <TextField
-                            name="celular"
-                            value={formData.celular}
-                            onChange={handleChange}
-                            id="outlined-basic-celular"
-                            className="w-100"
-                            label="Celular"
-                            variant="outlined"
-                            size='small'
-                        />
-                        <TextField
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            id="outlined-basic-email"
-                            className="w-100"
-                            label="Email"
-                            variant="outlined"
-                            size='small'
-                        />
-                    </Box>
-                    <Box className="flex flex-row justify-between gap-2 w-full">
+                    <TextField
+                        name="telefone"
+                        value={formData.telefone}
+                        onChange={handleChange}
+                        id="outlined-basic-telefone"
+                        label="Telefone"
+                        variant="outlined"
+                        size='small'
+                    />
+                    <Box className="flex flex-row gap-4">
                         <TextField
                             name="logradouro"
                             value={formData.logradouro}
                             onChange={handleChange}
                             id="outlined-basic-logradouro"
-                            className="w-100"
+                            className='w-full'
                             label="Logradouro"
                             variant="outlined"
                             size='small'
@@ -341,13 +386,13 @@ const Clientes = () => {
                             size='small'
                         />
                     </Box>
-                    <Box className="flex flex-row justify-between gap-2 w-full">
+                    <Box className="flex flex-row gap-4">
                         <TextField
                             name="cidade"
                             value={formData.cidade}
                             onChange={handleChange}
                             id="outlined-basic-cidade"
-                            className="w-100"
+                            className="w-full"
                             label="Cidade"
                             variant="outlined"
                             size='small'
@@ -357,7 +402,7 @@ const Clientes = () => {
                             value={formData.estado}
                             onChange={handleChange}
                             id="outlined-basic-estado"
-                            className="w-100"
+                            className="w-40"
                             label="Estado"
                             variant="outlined"
                             size='small'
@@ -369,7 +414,7 @@ const Clientes = () => {
             <Confirmar
                 open={openConfirm}
                 title="Confirmar Exclusão"
-                message="Deseja realmente excluir este cliente?"
+                message="Deseja realmente excluir este funcionário?"
                 onClose={() => setOpenConfirm(false)}
                 onConfirm={handleConfirmDelete}
             />
@@ -389,4 +434,4 @@ const Clientes = () => {
     )
 };
 
-export default Clientes;
+export default Funcionarios;
