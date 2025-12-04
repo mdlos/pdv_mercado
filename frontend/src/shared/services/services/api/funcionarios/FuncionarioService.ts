@@ -2,20 +2,21 @@ import { Api } from '../axios_config';
 import type { ILocalizacao } from '../clientes/ClienteService';
 
 export interface IFuncionario {
-    id_funcionario?: number;
+    cpf: string; // CPF é a chave primária
     nome: string;
     sobrenome: string;
     nome_social?: string;
-    cpf: string;
-    email: string;
+    email?: string;
     telefone?: string;
     sexo?: string;
-    senha?: string;
-    localizacao: ILocalizacao;
+    senha?: string; // Usado apenas no create/update
+    id_tipo_funcionario: number; // Obrigatório
+    localizacao?: ILocalizacao;
+    tipo_cargo?: string; // Retornado pelo backend
 }
 
 export interface IDetalheFuncionario extends IFuncionario {
-    id_funcionario: number;
+    // CPF já está na interface base
 }
 
 type TFuncionarioComTotalCount = {
@@ -25,13 +26,20 @@ type TFuncionarioComTotalCount = {
 
 const getAll = async (page = 1, filter = ''): Promise<TFuncionarioComTotalCount | Error> => {
     try {
-        const urlRelativa = `/funcionarios?_page=${page}&_limit=10&nome_like=${filter}`;
-        const { data, headers } = await Api.get(urlRelativa);
+        const { data } = await Api.get('/funcionarios');
 
         if (data) {
+            let filteredData = data;
+            if (filter) {
+                filteredData = data.filter((item: IDetalheFuncionario) =>
+                    item.nome.toLowerCase().includes(filter.toLowerCase()) ||
+                    item.cpf.includes(filter)
+                );
+            }
+
             return {
-                data: data,
-                totalCount: Number(headers['x-total-count'] || data.length),
+                data: filteredData,
+                totalCount: filteredData.length,
             };
         }
 
@@ -42,9 +50,9 @@ const getAll = async (page = 1, filter = ''): Promise<TFuncionarioComTotalCount 
     }
 };
 
-const getById = async (id: number): Promise<IDetalheFuncionario | Error> => {
+const getByCpf = async (cpf: string): Promise<IDetalheFuncionario | Error> => {
     try {
-        const { data } = await Api.get(`/funcionarios/${id}`);
+        const { data } = await Api.get(`/funcionarios/${cpf}`);
 
         if (data) {
             return data;
@@ -57,12 +65,12 @@ const getById = async (id: number): Promise<IDetalheFuncionario | Error> => {
     }
 };
 
-const create = async (dados: Omit<IFuncionario, 'id_funcionario'>): Promise<number | Error> => {
+const create = async (dados: IFuncionario): Promise<string | Error> => {
     try {
         const { data } = await Api.post<IDetalheFuncionario>('/funcionarios', dados);
 
         if (data) {
-            return data.id_funcionario;
+            return data.cpf;
         }
 
         return new Error('Erro ao criar o registro.');
@@ -72,18 +80,18 @@ const create = async (dados: Omit<IFuncionario, 'id_funcionario'>): Promise<numb
     }
 };
 
-const updateById = async (id: number, dados: Partial<Omit<IFuncionario, 'id_funcionario'>>): Promise<void | Error> => {
+const updateByCpf = async (cpf: string, dados: Partial<IFuncionario>): Promise<void | Error> => {
     try {
-        await Api.put(`/funcionarios/${id}`, dados);
+        await Api.put(`/funcionarios/${cpf}`, dados);
     } catch (error) {
         console.error(error);
         return new Error((error as { message: string }).message || 'Erro ao atualizar o registro.');
     }
 };
 
-const deleteById = async (id: number): Promise<void | Error> => {
+const deleteByCpf = async (cpf: string): Promise<void | Error> => {
     try {
-        await Api.delete(`/funcionarios/${id}`);
+        await Api.delete(`/funcionarios/${cpf}`);
     } catch (error) {
         console.error(error);
         return new Error((error as { message: string }).message || 'Erro ao apagar o registro.');
@@ -93,7 +101,7 @@ const deleteById = async (id: number): Promise<void | Error> => {
 export const FuncionarioService = {
     getAll,
     create,
-    getById,
-    updateById,
-    deleteById,
+    getByCpf,
+    updateByCpf,
+    deleteByCpf,
 };

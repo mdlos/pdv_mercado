@@ -1,25 +1,30 @@
 import { Api } from '../axios_config';
 
 export interface IItemVenda {
-    id_produto: number;
-    quantidade: number;
-    valor_unitario: number;
+    codigo_produto: number;
+    quantidade_venda: number;
+    preco_unitario: number;
+    subtotal?: number;
+    nome_produto?: string; // Opcional, para exibição
 }
 
 export interface IPagamentoVenda {
-    forma_pagamento: 'dinheiro' | 'debito' | 'credito' | 'pix' | 'promissoria';
-    valor_recebido?: number;
+    id_tipo: number; // 1: Dinheiro, 2: Cartão, etc. (Precisa mapear no frontend)
+    valor_pago: number;
     troco?: number;
-    parcelas?: number;
+    descricao?: string; // Retornado pelo backend
 }
 
 export interface IVenda {
     id_venda?: number;
-    id_cliente?: number | null;
-    valor_total: number;
-    data_venda: string;
+    cpf_cliente?: string | null;
+    cpf_funcionario: string;
+    valor_total?: number;
+    desconto?: number;
+    troco?: number;
+    data_venda?: string;
     itens: IItemVenda[];
-    pagamento: IPagamentoVenda;
+    pagamentos: IPagamentoVenda[]; // Backend espera lista, mas o DAO processa o primeiro item por enquanto
 }
 
 const create = async (dados: Omit<IVenda, 'id_venda'>): Promise<number | Error> => {
@@ -32,19 +37,35 @@ const create = async (dados: Omit<IVenda, 'id_venda'>): Promise<number | Error> 
 
         return new Error('Erro ao registrar a venda.');
     } catch (error) {
-        console.error(error);
-        return new Error((error as { message: string }).message || 'Erro ao registrar a venda.');
+        const err = error as any;
+        if (err.response && err.response.data) {
+            const errorData = err.response.data;
+            const errorMessage = errorData.message || 'Erro ao registrar a venda.';
+            const detailedErrors = errorData.errors ? JSON.stringify(errorData.errors) : '';
+            return new Error(`${errorMessage} ${detailedErrors}`);
+        }
+        return new Error('Erro ao registrar a venda.');
     }
 };
 
-const getAll = async (page = 1): Promise<{ data: IVenda[], totalCount: number } | Error> => {
+const getAll = async (page = 1, filterData = '', filterCpf = ''): Promise<{ data: IVenda[], totalCount: number } | Error> => {
     try {
-        const { data, headers } = await Api.get(`/vendas?_page=${page}&_limit=10`);
+        let url = '/vendas';
+        const params = new URLSearchParams();
+
+        if (filterData) params.append('data', filterData);
+        if (filterCpf) params.append('cpf', filterCpf);
+
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+
+        const { data } = await Api.get(url);
 
         if (data) {
             return {
                 data: data,
-                totalCount: Number(headers['x-total-count'] || data.length),
+                totalCount: data.length,
             };
         }
 
@@ -55,7 +76,23 @@ const getAll = async (page = 1): Promise<{ data: IVenda[], totalCount: number } 
     }
 };
 
+const getById = async (id: number): Promise<IVenda | Error> => {
+    try {
+        const { data } = await Api.get(`/vendas/${id}`);
+
+        if (data) {
+            return data;
+        }
+
+        return new Error('Erro ao consultar venda.');
+    } catch (error) {
+        console.error(error);
+        return new Error((error as { message: string }).message || 'Erro ao consultar venda.');
+    }
+};
+
 export const VendaService = {
     create,
     getAll,
+    getById,
 };

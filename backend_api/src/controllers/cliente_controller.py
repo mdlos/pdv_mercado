@@ -1,148 +1,152 @@
-# src/controllers/cliente_controller.py
+# src/controllers/cliente_controller.py 
 
-from flask import Blueprint, jsonify, request
-from src.models.cliente_dao import ClienteDAO
+from flask import Blueprint, request, jsonify
 from src.schemas.cliente_schema import ClienteSchema
-from marshmallow import ValidationError
-import http
+from src.models.cliente_dao import ClienteDAO
+from src.utils.formatters import clean_only_numbers
+from http import HTTPStatus
+import logging # Adicionar import para log
 
-# Instanciação
+logger = logging.getLogger(__name__)
+
 cliente_bp = Blueprint('clientes', __name__)
 cliente_dao = ClienteDAO()
-cliente_schema = ClienteSchema()        # Para um único objeto (POST, PUT)
-clientes_schema = ClienteSchema(many=True) # Para listas (GET)
+cliente_schema = ClienteSchema()
+clientes_schema = ClienteSchema(many=True)
 
-# =======================================================
-# 1. READ ALL & CREATE (GET /api/v1/clientes & POST /api/v1/clientes)
-# =======================================================
-
-@cliente_bp.route('/', methods=['GET'])
-def get_clientes():
-    """ Rota para listar todos os clientes (READ ALL). """
-    clientes_data = cliente_dao.find_all()
-    
-    if clientes_data is not None:
-        result = clientes_schema.dump(clientes_data) 
-        return jsonify(result), http.HTTPStatus.OK
-    else:
-        return jsonify({"message": "Erro ao buscar clientes."}), http.HTTPStatus.INTERNAL_SERVER_ERROR
-@cliente_bp.route('/', methods=['POST'])
+# -----------------------------------------------------------
+# C - CREATE (Criação de Novo Cliente) - MANTIDO
+# -----------------------------------------------------------
+@cliente_bp.route('/', methods=['POST'], strict_slashes=False)
 def create_cliente():
-    """ Rota para criar um novo cliente (CREATE) com validação e localização. """
-    
+    """ Rota para criar um novo cliente. """
     data = request.get_json()
     
     try:
-        valid_data = cliente_schema.load(data)
-    except ValidationError as err:
-        return jsonify(err.messages), http.HTTPStatus.BAD_REQUEST
+        validated_data = cliente_schema.load(data)
+    except Exception as e:
+        error_details = getattr(e, 'messages', str(e))
+        return jsonify({"message": "Erro de validação", "errors": error_details}), HTTPStatus.BAD_REQUEST
 
-    # 1. EXTRAÇÃO DOS DADOS (Cliente e Localização)
-    cpf_cnpj = valid_data['cpf_cnpj']
-    nome = valid_data['nome']
+    cpf_cnpj_limpo = clean_only_numbers(validated_data['cpf_cnpj'])
+    telefone_limpo = clean_only_numbers(validated_data.get('telefone', ''))
+    localizacao_data = validated_data.pop('localizacao', None)
+    sexo = validated_data.get('sexo')
+    sexo_final = sexo if sexo else None 
+
+    try:
+        id_inserido = cliente_dao.insert(
+            cpf_cnpj=cpf_cnpj_limpo,
+            nome=validated_data['nome'],
+            email=validated_data.get('email'),
+            telefone=telefone_limpo,
+            sexo=sexo_final, 
+            localizacao_data=localizacao_data
+        )
+        
+        if id_inserido:
+            novo_cliente_data = cliente_dao.find_by_id(id_inserido)
+            return cliente_schema.dump(novo_cliente_data), HTTPStatus.CREATED
+        else:
+            return jsonify({"message": "Não foi possível inserir o cliente (CNPJ/CPF ou Email duplicado)."}), HTTPStatus.INTERNAL_SERVER_ERROR
+
+    except Exception as e:
+        logger.error(f"Erro interno ao criar cliente: {e}")
+        return jsonify({"message": f"Erro interno ao criar cliente: {e}"}), HTTPStatus.INTERNAL_SERVER_ERROR
+
+# -----------------------------------------------------------
+# R - READ ALL (Busca Todos) - MANTIDO
+# -----------------------------------------------------------
+@cliente_bp.route('/', methods=['GET'], strict_slashes=False)
+def get_all_clientes():
+    """ Rota para buscar todos os clientes cadastrados. """
     
-    # Extraindo telefone e sexo
-    telefone = valid_data.get('telefone')
-    sexo = valid_data.get('sexo')
+    clientes_data = cliente_dao.find_all() 
     
-    email = valid_data.get('email')
-    localizacao_data = valid_data['localizacao']
-    
-    # 2. CHAMADA AO DAO (SQL PURO)
-    # Passando telefone e sexo para o DAO
-    new_id = cliente_dao.insert(cpf_cnpj, nome, email, telefone, sexo, localizacao_data)
-    
-    # 3. RESPOSTA
-    if new_id:
-        return jsonify({
-            "message": "Cliente criado com sucesso!",
-            "id_cliente": new_id,
-            "nome": nome
-        }), http.HTTPStatus.CREATED
+    if clientes_data:
+        return clientes_schema.dump(clientes_data, many=True), HTTPStatus.OK
     else:
-        return jsonify({"message": "Falha ao criar cliente (Erro DB ou conflito de dados).", "status": "Error"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
-# =======================================================
-# 2. READ ONE (GET /api/v1/clientes/{id})
-# =======================================================
+        return jsonify([]), HTTPStatus.OK
 
-@cliente_bp.route('/<int:cliente_id>', methods=['GET'])
-def get_cliente_by_id(cliente_id):
-    """ Rota para buscar um cliente pelo ID (READ ONE). """
-    
-    cliente_data = cliente_dao.find_by_id(cliente_id)
-    
+# -----------------------------------------------------------
+# R - READ ONE (Busca UNIFICADA por ID ou CPF/CNPJ) <--- ROTA CORRIGIDA
+# -----------------------------------------------------------
+@cliente_bp.route('/<string:identifier>', methods=['GET'])
+def get_cliente_unificado(identifier):
+    """ 
+    Rota unificada: Tenta buscar por ID (se for INT) e, se falhar, busca por CPF/CNPJ (STRING).
+    """
+    cliente_data = None
+    identifier_limpo = clean_only_numbers(identifier) # Limpa o identificador de qualquer forma
+
+    # 1. TENTA BUSCAR POR ID (CHAVE PRIMÁRIA - INT)
+    if identifier_limpo.isdigit():
+        try:
+            cliente_data = cliente_dao.find_by_id(int(identifier_limpo))
+        except Exception as e:
+            logger.warning(f"Busca por ID falhou: {e}")
+            pass # Continua a busca por CPF/CNPJ
+            
+    # 2. TENTA BUSCAR POR CPF/CNPJ (CHAVE DE NEGÓCIO - STRING)
     if cliente_data is None:
-        return jsonify({"message": f"Cliente com ID {cliente_id} não encontrado."}), http.HTTPStatus.NOT_FOUND # 404
+        cliente_data = cliente_dao.find_by_cpf_cnpj(identifier_limpo)
     
-    # Serializa e retorna
-    result = cliente_schema.dump(cliente_data)
-    return jsonify(result), http.HTTPStatus.OK
+    # 3. RETORNO FINAL
+    if cliente_data:
+        return cliente_schema.dump(cliente_data), HTTPStatus.OK
+    else:
+        return jsonify({"message": f"Cliente com ID ou CPF/CNPJ {identifier} não encontrado."}), HTTPStatus.NOT_FOUND
 
-
-# =======================================================
-# 3. UPDATE (PUT /api/v1/clientes/{id})
-# =======================================================
-@cliente_bp.route('/<int:cliente_id>', methods=['PUT'])
-def update_cliente(cliente_id):
-    """ Rota para atualizar um cliente existente (UPDATE). """
+# -----------------------------------------------------------
+# U - UPDATE (Atualização) - MANTIDO
+# -----------------------------------------------------------
+@cliente_bp.route('/<int:id_cliente>', methods=['PUT'])
+def update_cliente(id_cliente):
+    """ Rota para atualizar dados do cliente. """
     data = request.get_json()
     
-    # 1. VALIDAÇÃO (partial=True permite que campos sejam omitidos)
     try:
         valid_data = cliente_schema.load(data, partial=True)
-    except ValidationError as err:
-        return jsonify(err.messages), http.HTTPStatus.BAD_REQUEST
+    except Exception as e:
+        error_details = getattr(e, 'messages', str(e))
+        return jsonify({"message": "Erro de validação", "errors": error_details}), HTTPStatus.BAD_REQUEST
 
-    # 2. SEPARAÇÃO DOS DADOS
-    # Dados de Cliente
-    nome = valid_data.get('nome')
-    email = valid_data.get('email')
-    cpf_cnpj = valid_data.get('cpf_cnpj')
-    telefone = valid_data.get('telefone')
-    sexo = valid_data.get('sexo')
+    if not valid_data:
+        return jsonify({"message": "Nenhum dado válido fornecido para atualização."}), HTTPStatus.BAD_REQUEST
+
+    localizacao_data = valid_data.pop('localizacao', None)
     
-    # Dados de Localização (Se o objeto 'localizacao' foi enviado)
-    localizacao_data = valid_data.get('localizacao')
-
-    # Se a requisição veio, mas não tinha NENHUM dado para atualizar
-    if not any([nome, email, cpf_cnpj, telefone, sexo, localizacao_data]):
-        return jsonify({"message": "Nenhum dado válido fornecido para atualização."}), http.HTTPStatus.BAD_REQUEST
-
-    # 3. CHAMADA AO DAO
+    if 'cpf_cnpj' in valid_data:
+        valid_data['cpf_cnpj'] = clean_only_numbers(valid_data['cpf_cnpj'])
+    
+    if 'telefone' in valid_data:
+        valid_data['telefone'] = valid_data['telefone'] if valid_data['telefone'] else None
+        if valid_data['telefone']:
+            valid_data['telefone'] = clean_only_numbers(valid_data['telefone'])
+    
     rows_affected = cliente_dao.update(
-        cliente_id=cliente_id,
-        nome=nome,
-        email=email,
-        cpf_cnpj=cpf_cnpj,
-        telefone=telefone,
-        sexo=sexo,        
-        localizacao_data=localizacao_data
+        id_cliente=id_cliente,
+        localizacao_data=localizacao_data,
+        **valid_data 
     )
-
-    # 4. RESPOSTA
-    if rows_affected == 1:
-        return jsonify({"message": f"Cliente {cliente_id} atualizado com sucesso!"}), http.HTTPStatus.OK
-    elif rows_affected == 0:
-        return jsonify({"message": f"Cliente {cliente_id} encontrado, mas nenhum dado foi alterado."}), http.HTTPStatus.OK
-    else: # rows_affected == -1 (Erro de DB)
-        return jsonify({"message": "Falha na atualização (Erro interno ou conflito de dados).", "status": "Error"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
-
-# =======================================================
-# 4. DELETE (DELETE /api/v1/clientes/{id})
-# =======================================================
-
-@cliente_bp.route('/<int:cliente_id>', methods=['DELETE'])
-def delete_cliente(cliente_id):
-    """ Rota para deletar um cliente (DELETE). """
     
-    # 1. CHAMADA AO DAO (SQL PURO)
-    rows_affected = cliente_dao.delete(cliente_id)
-    
-    # 2. RESPOSTA
     if rows_affected == 1:
-        # 204 No Content é o padrão para DELETE bem-sucedido
-        return '', http.HTTPStatus.NO_CONTENT 
+        return jsonify({"message": f"Cliente {id_cliente} atualizado com sucesso."}), HTTPStatus.OK
     elif rows_affected == 0:
-        return jsonify({"message": f"Cliente com ID {cliente_id} não encontrado."}), http.HTTPStatus.NOT_FOUND
-    else: # rows_affected == -1 (Erro de DB)
-        return jsonify({"message": "Falha na exclusão (Erro interno).", "status": "Error"}), http.HTTPStatus.INTERNAL_SERVER_ERROR
+        return jsonify({"message": f"Cliente {id_cliente} encontrado, mas nenhum dado foi alterado."}), HTTPStatus.OK
+    else:
+        return jsonify({"message": "Erro interno ao atualizar cliente.", "status": "Error"}), HTTPStatus.INTERNAL_SERVER_ERROR
+
+# -----------------------------------------------------------
+# D - DELETE (Exclusão) - MANTIDO
+# -----------------------------------------------------------
+@cliente_bp.route('/<int:id_cliente>', methods=['DELETE'])
+def delete_cliente(id_cliente):
+    """ Rota para deletar um cliente e sua localização associada. """
+    
+    rows_affected = cliente_dao.delete(id_cliente)
+    
+    if rows_affected > 0:
+        return '', HTTPStatus.NO_CONTENT 
+    else:
+        return jsonify({"message": f"Cliente com ID {id_cliente} não encontrado ou erro na exclusão."}), HTTPStatus.NOT_FOUND

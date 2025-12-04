@@ -7,13 +7,31 @@ import { useAuth } from "../shared/contexts/AuthContext";
 import logo_mc from "../assets/logo_mc.svg";
 import bg_login from "../assets/bg_login.png";
 
+import { CircularProgress, Alert } from "@mui/material";
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
+
   const { login } = useAuth();
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    login({ email, password });
+    setIsLoading(true);
+    setError(undefined);
+
+    try {
+      const result = await login({ email, senha: password });
+      if (result) {
+        setError(result);
+      }
+    } catch (err) {
+      setError("Erro inesperado ao tentar fazer login.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -44,18 +62,34 @@ const Login = () => {
 
           }}>
           <img src={logo_mc} alt="Logo da Market Coffee" className="w-100 p-0 m-0" />
+
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-100">
+            {error && <Alert severity="error">{error}</Alert>}
+
             <TextField
               type="email"
               label="Email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)} />
+              disabled={isLoading}
+              onChange={(e) => setEmail(e.target.value)}
+              fullWidth
+            />
             <TextField
               type="password"
               label="Senha"
               value={password}
-              onChange={(e) => setPassword(e.target.value)} />
-            <Button type="submit" variant="contained">Login</Button>
+              disabled={isLoading}
+              onChange={(e) => setPassword(e.target.value)}
+              fullWidth
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isLoading}
+              size="large"
+            >
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Login'}
+            </Button>
           </form>
         </div>
       </motion.div>

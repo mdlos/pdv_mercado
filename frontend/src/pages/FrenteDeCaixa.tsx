@@ -53,6 +53,18 @@ const FrenteDeCaixa = () => {
   const [parcelas, setParcelas] = useState<number>(1);
   const [isSavingVenda, setIsSavingVenda] = useState(false);
 
+  // Helper para mapear forma de pagamento
+  const mapFormaPagamentoToId = (forma: FormaPagamento): number => {
+    switch (forma) {
+      case 'dinheiro': return 1;
+      case 'debito': return 2;
+      case 'credito': return 3;
+      case 'pix': return 4;
+      case 'promissoria': return 5;
+      default: return 1;
+    }
+  };
+
   // Carregar produtos iniciais
   useEffect(() => {
     setIsLoadingProdutos(true);
@@ -86,7 +98,7 @@ const FrenteDeCaixa = () => {
   };
 
   // Cálculos
-  const calcularSubtotal = () => carrinho.reduce((acc, item) => acc + (item.produto.preco_venda * item.quantidade), 0);
+  const calcularSubtotal = () => carrinho.reduce((acc, item) => acc + (Number(item.produto.preco) * item.quantidade), 0);
 
   const calcularTotalFinal = () => {
     const subtotal = calcularSubtotal();
@@ -159,20 +171,22 @@ const FrenteDeCaixa = () => {
     setIsSavingVenda(true);
 
     const dadosVenda: Omit<IVenda, 'id_venda'> = {
-      data_venda: new Date().toISOString(),
-      id_cliente: clienteIdentificado?.id_cliente || null,
-      valor_total: calcularTotalFinal(),
+      // data_venda: O backend gera automaticamente
+      cpf_cliente: clienteIdentificado?.cpf_cnpj ? clienteIdentificado.cpf_cnpj.replace(/\D/g, '') : null,
+      cpf_funcionario: '00000000000', // TODO: Pegar do contexto de autenticação (apenas números)
+      // valor_total: O backend calcula
+      desconto: parseFloat(desconto) || 0,
       itens: carrinho.map(item => ({
-        id_produto: item.produto.id_produto,
-        quantidade: item.quantidade,
-        valor_unitario: item.produto.preco_venda
+        codigo_produto: item.produto.codigo_produto,
+        quantidade_venda: item.quantidade,
+        preco_unitario: Number(item.produto.preco),
+        // subtotal: O backend calcula
       })),
-      pagamento: {
-        forma_pagamento: formaPagamento,
-        parcelas: formaPagamento === 'credito' ? parcelas : 1,
-        valor_recebido: formaPagamento === 'dinheiro' ? valorRecebidoFloat : undefined,
-        troco: formaPagamento === 'dinheiro' ? (valorRecebidoFloat - calcularTotalFinal()) : undefined
-      }
+      pagamentos: [{
+        id_tipo: mapFormaPagamentoToId(formaPagamento),
+        valor_pago: formaPagamento === 'dinheiro' ? valorRecebidoFloat : calcularTotalFinal(),
+        // troco: O backend calcula
+      }]
     };
 
     VendaService.create(dadosVenda)
@@ -209,7 +223,7 @@ const FrenteDeCaixa = () => {
               Identificação do Cliente
             </Typography>
             {clienteIdentificado ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: '#e8f5e9', p: 2, borderRadius: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderRadius: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CheckCircleIcon color="success" />
                   <Box>
@@ -282,7 +296,7 @@ const FrenteDeCaixa = () => {
               />
               <TextField
                 label="Preço Unitário"
-                value={produtoSelecionado ? `R$ ${produtoSelecionado.preco_venda.toFixed(2)}` : ''}
+                value={produtoSelecionado ? `R$ ${Number(produtoSelecionado.preco).toFixed(2)}` : ''}
                 disabled
                 fullWidth
               />
@@ -347,8 +361,8 @@ const FrenteDeCaixa = () => {
                     <TableCell>{item.produto.codigo_barras}</TableCell>
                     <TableCell>{item.produto.nome}</TableCell>
                     <TableCell align="right">{item.quantidade}</TableCell>
-                    <TableCell align="right">R$ {item.produto.preco_venda.toFixed(2)}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>R$ {(item.produto.preco_venda * item.quantidade).toFixed(2)}</TableCell>
+                    <TableCell align="right">R$ {Number(item.produto.preco).toFixed(2)}</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>R$ {(Number(item.produto.preco) * item.quantidade).toFixed(2)}</TableCell>
                     <TableCell align="center">
                       <IconButton size="small" color="error" onClick={() => handleRemoverItem(item.id)}>
                         <DeleteIcon fontSize="small" />
@@ -433,7 +447,7 @@ const FrenteDeCaixa = () => {
             </RadioGroup>
           </FormControl>
 
-          <Box sx={{ mt: 2, p: 3, bgcolor: '#f5f5f5', borderRadius: 2, minHeight: '150px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <Box sx={{ mt: 2, p: 3, borderRadius: 2, minHeight: '150px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             {formaPagamento === 'dinheiro' && (
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField

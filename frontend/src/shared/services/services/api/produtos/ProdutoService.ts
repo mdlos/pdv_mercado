@@ -1,15 +1,17 @@
 import { Api } from '../axios_config';
 
 export interface IProduto {
-    id_produto?: number;
+    codigo_produto?: number;
     nome: string;
+    descricao: string;
+    preco: number;
     codigo_barras: string;
-    preco_venda: number;
-    quantidade_estoque?: number;
+    initial_quantity?: number; // Usado apenas no create
+    quantidade?: number; // Retornado pelo backend
 }
 
 export interface IDetalheProduto extends IProduto {
-    id_produto: number;
+    codigo_produto: number;
 }
 
 type TProdutoComTotalCount = {
@@ -19,13 +21,21 @@ type TProdutoComTotalCount = {
 
 const getAll = async (page = 1, filter = ''): Promise<TProdutoComTotalCount | Error> => {
     try {
-        const urlRelativa = `/produtos?_page=${page}&_limit=10&nome_like=${filter}`;
-        const { data, headers } = await Api.get(urlRelativa);
+        // Backend atualmente retorna todos os produtos sem paginação
+        const { data } = await Api.get('/produtos');
 
         if (data) {
+            let filteredData = data;
+            if (filter) {
+                filteredData = data.filter((item: IDetalheProduto) =>
+                    item.nome.toLowerCase().includes(filter.toLowerCase()) ||
+                    item.codigo_barras.includes(filter)
+                );
+            }
+
             return {
-                data: data,
-                totalCount: Number(headers['x-total-count'] || data.length),
+                data: filteredData,
+                totalCount: filteredData.length,
             };
         }
 
@@ -38,11 +48,12 @@ const getAll = async (page = 1, filter = ''): Promise<TProdutoComTotalCount | Er
 
 const getByCodigo = async (codigo: string): Promise<IDetalheProduto | Error> => {
     try {
-        // Assume que a API suporta filtro por código de barras
-        const { data } = await Api.get(`/produtos?codigo_barras=${codigo}`);
+        // Backend não tem rota de busca por código de barras ainda, simulando com getAll
+        const { data } = await Api.get('/produtos');
 
-        if (data && data.length > 0) {
-            return data[0];
+        if (data) {
+            const produto = data.find((item: IDetalheProduto) => item.codigo_barras === codigo);
+            if (produto) return produto;
         }
 
         return new Error('Produto não encontrado.');
@@ -67,12 +78,12 @@ const getById = async (id: number): Promise<IDetalheProduto | Error> => {
     }
 };
 
-const create = async (dados: Omit<IProduto, 'id_produto'>): Promise<number | Error> => {
+const create = async (dados: Omit<IProduto, 'codigo_produto'>): Promise<number | Error> => {
     try {
-        const { data } = await Api.post<IDetalheProduto>('/produtos', dados);
+        const { data } = await Api.post<{ codigo_produto: number }>('/produtos', dados);
 
         if (data) {
-            return data.id_produto;
+            return data.codigo_produto;
         }
 
         return new Error('Erro ao criar o registro.');
@@ -82,7 +93,7 @@ const create = async (dados: Omit<IProduto, 'id_produto'>): Promise<number | Err
     }
 };
 
-const updateById = async (id: number, dados: Partial<Omit<IProduto, 'id_produto'>>): Promise<void | Error> => {
+const updateById = async (id: number, dados: Partial<Omit<IProduto, 'codigo_produto'>>): Promise<void | Error> => {
     try {
         await Api.put(`/produtos/${id}`, dados);
     } catch (error) {

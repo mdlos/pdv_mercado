@@ -21,6 +21,7 @@ const Produtos = () => {
     const [formData, setFormData] = useState({
         id: '',
         nome: '',
+        descricao: '',
         preco: '',
         codigoBarras: '',
         estoque: ''
@@ -31,16 +32,16 @@ const Produtos = () => {
     const [busca, setBusca] = useState({ id: '', nome: '', codigoBarras: '' });
 
     const columns: IColumn[] = useMemo(() => [
-        { id: 'id_produto', label: 'ID', minWidth: 50 },
+        { id: 'codigo_produto', label: 'Código', minWidth: 50 },
         { id: 'nome', label: 'Nome', minWidth: 150 },
         {
-            id: 'preco_venda',
+            id: 'preco',
             label: 'Preço',
             minWidth: 100,
             render: (value) => `R$ ${Number(value).toFixed(2)}`
         },
         { id: 'codigo_barras', label: 'Código de Barras', minWidth: 120 },
-        { id: 'quantidade_estoque', label: 'Estoque', minWidth: 80 },
+        { id: 'quantidade', label: 'Estoque', minWidth: 80 },
     ], []);
 
     // Função para buscar dados
@@ -60,7 +61,7 @@ const Produtos = () => {
                         filteredData = filteredData.filter(item => item.codigo_barras.includes(busca.codigoBarras));
                     }
                     if (busca.id) {
-                        filteredData = filteredData.filter(item => String(item.id_produto) === busca.id);
+                        filteredData = filteredData.filter(item => String(item.codigo_produto) === busca.id);
                     }
 
                     setTotalCount(filteredData.length);
@@ -86,6 +87,7 @@ const Produtos = () => {
         setFormData({
             id: '',
             nome: '',
+            descricao: '',
             preco: '',
             codigoBarras: '',
             estoque: ''
@@ -95,16 +97,16 @@ const Produtos = () => {
     const handleSave = () => {
         setIsLoading(true);
 
-        const dadosParaEnviar = {
+        const dadosBase = {
             nome: formData.nome,
-            preco_venda: Number(formData.preco.replace(',', '.')),
+            descricao: formData.descricao || formData.nome, // Descrição obrigatória no backend? Se sim, fallback
+            preco: Number(formData.preco.replace(',', '.')),
             codigo_barras: formData.codigoBarras,
-            quantidade_estoque: Number(formData.estoque)
         };
 
         if (formData.id) {
             // Edição
-            ProdutoService.updateById(Number(formData.id), dadosParaEnviar)
+            ProdutoService.updateById(Number(formData.id), dadosBase)
                 .then((result) => {
                     if (result instanceof Error) {
                         alert(result.message);
@@ -117,8 +119,11 @@ const Produtos = () => {
                 })
                 .finally(() => setIsLoading(false));
         } else {
-            // Criação
-            ProdutoService.create(dadosParaEnviar)
+            // Criação (envia initial_quantity)
+            ProdutoService.create({
+                ...dadosBase,
+                initial_quantity: Number(formData.estoque)
+            })
                 .then((result) => {
                     if (result instanceof Error) {
                         alert(result.message);
@@ -154,17 +159,18 @@ const Produtos = () => {
 
     const handleEdit = (row: IDetalheProduto) => {
         setFormData({
-            id: String(row.id_produto),
+            id: String(row.codigo_produto),
             nome: row.nome,
-            preco: String(row.preco_venda),
+            descricao: row.descricao || '',
+            preco: String(row.preco),
             codigoBarras: row.codigo_barras,
-            estoque: String(row.quantidade_estoque || 0)
+            estoque: String(row.quantidade || 0)
         });
         setOpen(true);
     };
 
     const handleDeleteClick = (row: IDetalheProduto) => {
-        setIdToDelete(row.id_produto);
+        setIdToDelete(row.codigo_produto);
         setOpenConfirm(true);
     };
 
@@ -194,7 +200,7 @@ const Produtos = () => {
                 <Box sx={{ display: 'flex', gap: 2, width: '81%', flexWrap: 'wrap' }}>
                     <TextField
                         size="small"
-                        label="ID"
+                        label="Código"
                         value={busca.id}
                         onChange={(e) => setBusca(prev => ({ ...prev, id: e.target.value }))}
                         sx={{ width: '100px' }}
@@ -257,6 +263,16 @@ const Produtos = () => {
                         fullWidth
                     />
                     <TextField
+                        name="descricao"
+                        value={formData.descricao}
+                        onChange={handleChange}
+                        id="outlined-basic-descricao"
+                        label="Descrição"
+                        variant="outlined"
+                        size='small'
+                        fullWidth
+                    />
+                    <TextField
                         name="preco"
                         value={formData.preco}
                         onChange={handleChange}
@@ -285,6 +301,7 @@ const Produtos = () => {
                         variant="outlined"
                         size='small'
                         type="number"
+                        disabled={!!formData.id} // Desabilita edição de estoque direto no update se desejado
                     />
                 </Box>
             </FormRegister>

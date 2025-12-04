@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo, type ChangeEvent } from 'react';
 import { LayoutBase } from "../shared/layouts/LayoutBase";
 import FormRegister from "../shared/components/FormRegister";
@@ -11,7 +12,7 @@ import { FuncionarioService, type IDetalheFuncionario } from '../shared/services
 const Funcionarios = () => {
     const [open, setOpen] = useState(false);
     const [openConfirm, setOpenConfirm] = useState(false);
-    const [idToDelete, setIdToDelete] = useState<number | null>(null);
+    const [idToDelete, setIdToDelete] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     // Dados da tabela
@@ -19,7 +20,7 @@ const Funcionarios = () => {
     const [totalCount, setTotalCount] = useState(0);
 
     const [formData, setFormData] = useState({
-        id: '',
+        id: '', // Guarda o CPF original para edição
         cpf: '',
         sexo: '',
         email: '',
@@ -28,17 +29,19 @@ const Funcionarios = () => {
         sobrenome: '',
         nomeSocial: '',
         telefone: '',
+        cep: '', // NOVO CAMPO
         logradouro: '',
         numero: '',
         cidade: '',
         estado: '',
+        idTipoFuncionario: '2', // Default: 2 (Vendedor)
     });
 
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [busca, setBusca] = useState({ cpf: '', nome: '', telefone: '' });
 
-    const columns: IColumn[] = useMemo(() => [
+    const columns: IColumn<IDetalheFuncionario>[] = useMemo(() => [
         { id: 'cpf', label: 'CPF', minWidth: 100 },
         {
             id: 'nome',
@@ -49,7 +52,7 @@ const Funcionarios = () => {
         { id: 'sexo', label: 'Sexo', minWidth: 100 },
         { id: 'nome_social', label: 'Nome Social', minWidth: 100 },
         { id: 'telefone', label: 'Telefone', minWidth: 100 },
-        // Campos aninhados não são exibidos diretamente na tabela simples, mas estão nos dados
+        { id: 'tipo_cargo', label: 'Cargo', minWidth: 100 },
     ], []);
 
     // Função para buscar dados
@@ -103,10 +106,12 @@ const Funcionarios = () => {
             sobrenome: '',
             nomeSocial: '',
             telefone: '',
+            cep: '',
             logradouro: '',
             numero: '',
             cidade: '',
             estado: '',
+            idTipoFuncionario: '2',
         });
     };
 
@@ -116,23 +121,25 @@ const Funcionarios = () => {
         const dadosParaEnviar = {
             nome: formData.nome,
             sobrenome: formData.sobrenome,
-            nome_social: formData.nomeSocial,
+            nome_social: formData.nomeSocial || undefined,
             cpf: formData.cpf,
-            email: formData.email,
-            telefone: formData.telefone,
-            sexo: formData.sexo,
+            email: formData.email || undefined,
+            telefone: formData.telefone || undefined,
+            sexo: formData.sexo || undefined,
             senha: formData.senha, // Envia senha apenas se preenchida ou na criação
+            id_tipo_funcionario: Number(formData.idTipoFuncionario),
             localizacao: {
+                cep: formData.cep, // NOVO CAMPO
                 logradouro: formData.logradouro,
                 numero: formData.numero,
                 cidade: formData.cidade,
-                estado: formData.estado
+                uf: formData.estado // Backend espera 'uf'
             }
         };
 
         if (formData.id) {
             // Edição
-            FuncionarioService.updateById(Number(formData.id), dadosParaEnviar)
+            FuncionarioService.updateByCpf(formData.id, dadosParaEnviar)
                 .then((result) => {
                     if (result instanceof Error) {
                         alert(result.message);
@@ -182,32 +189,34 @@ const Funcionarios = () => {
 
     const handleEdit = (row: IDetalheFuncionario) => {
         setFormData({
-            id: String(row.id_funcionario),
+            id: row.cpf, // Guarda CPF original
             cpf: row.cpf,
             sexo: row.sexo || '',
-            email: row.email,
-            senha: '', // Não preenche senha na edição por segurança
+            email: row.email || '',
+            senha: '', // Não preenche senha na edição
             nome: row.nome,
             sobrenome: row.sobrenome,
             nomeSocial: row.nome_social || '',
             telefone: row.telefone || '',
+            cep: row.localizacao?.cep || '',
             logradouro: row.localizacao?.logradouro || '',
             numero: row.localizacao?.numero || '',
             cidade: row.localizacao?.cidade || '',
-            estado: row.localizacao?.estado || '',
+            estado: row.localizacao?.uf || '', // Backend retorna 'uf'
+            idTipoFuncionario: String(row.id_tipo_funcionario),
         });
         setOpen(true);
     };
 
     const handleDeleteClick = (row: IDetalheFuncionario) => {
-        setIdToDelete(row.id_funcionario);
+        setIdToDelete(row.cpf);
         setOpenConfirm(true);
     };
 
     const handleConfirmDelete = () => {
         if (idToDelete) {
             setIsLoading(true);
-            FuncionarioService.deleteById(idToDelete)
+            FuncionarioService.deleteByCpf(idToDelete)
                 .then((result) => {
                     if (result instanceof Error) {
                         alert(result.message);
@@ -356,6 +365,16 @@ const Funcionarios = () => {
                         />
                     </Box>
                     <TextField
+                        name="idTipoFuncionario"
+                        value={formData.idTipoFuncionario}
+                        onChange={handleChange}
+                        id="outlined-basic-idTipoFuncionario"
+                        label="Cargo ID (1=Admin, 2=Vendedor)"
+                        variant="outlined"
+                        size='small'
+                        type="number"
+                    />
+                    <TextField
                         name="telefone"
                         value={formData.telefone}
                         onChange={handleChange}
@@ -365,6 +384,16 @@ const Funcionarios = () => {
                         size='small'
                     />
                     <Box className="flex flex-row gap-4">
+                        <TextField
+                            name="cep"
+                            value={formData.cep}
+                            onChange={handleChange}
+                            id="outlined-basic-cep"
+                            className="w-40"
+                            label="CEP"
+                            variant="outlined"
+                            size='small'
+                        />
                         <TextField
                             name="logradouro"
                             value={formData.logradouro}

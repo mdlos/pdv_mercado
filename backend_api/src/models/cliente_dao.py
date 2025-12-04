@@ -1,4 +1,4 @@
-# src/models/cliente_dao.py
+# src/models/cliente_dao.py (VERSÃO FINAL E COMPLETA)
 
 from src.db_connection import get_db_connection
 
@@ -23,7 +23,7 @@ class ClienteDAO:
                     SELECT c.id_cliente, c.nome, c.cpf_cnpj, c.email, c.telefone, c.sexo, 
                         l.cep, l.logradouro, l.numero, l.bairro, l.cidade, l.uf
                     FROM cliente c
-                    JOIN localizacao l ON c.id_localizacao = l.id_localizacao
+                    LEFT JOIN localizacao l ON c.id_localizacao = l.id_localizacao
                     ORDER BY c.id_cliente;
                 """
                 cur.execute(sql)
@@ -110,7 +110,7 @@ class ClienteDAO:
                     SELECT c.id_cliente, c.nome, c.cpf_cnpj, c.email, c.telefone, c.sexo, 
                         l.cep, l.logradouro, l.numero, l.bairro, l.cidade, l.uf, l.id_localizacao
                     FROM cliente c
-                    JOIN localizacao l ON c.id_localizacao = l.id_localizacao
+                    LEFT JOIN localizacao l ON c.id_localizacao = l.id_localizacao
                     WHERE c.id_cliente = %s;
                 """
                 cur.execute(sql, (cliente_id,))
@@ -125,6 +125,37 @@ class ClienteDAO:
                     
         except Exception as e:
             print(f"Erro no ClienteDAO.find_by_id: {e}")
+            return None
+        finally:
+            if conn: conn.close()
+
+    # ------------------------------------------------
+    # NOVO: READ ONE (find_by_cpf_cnpj) <--- MÉTODO FALTANTE ADICIONADO
+    # ------------------------------------------------
+    def find_by_cpf_cnpj(self, cpf_cnpj: str): 
+        """ Busca um cliente pela chave de negócio (CPF ou CNPJ). """
+        conn = get_db_connection()
+        if conn is None: return None
+
+        try:
+            with conn.cursor() as cur:
+                # SQL: Busca na tabela cliente pela coluna cpf_cnpj
+                sql = """
+                    SELECT c.*, l.cep, l.logradouro, l.numero, l.bairro, l.cidade, l.uf, l.id_localizacao
+                    FROM cliente c
+                    LEFT JOIN localizacao l ON c.id_localizacao = l.id_localizacao
+                    WHERE c.cpf_cnpj = %s;
+                """
+                cur.execute(sql, (cpf_cnpj,))
+                row = cur.fetchone()
+                
+                if row is None:
+                    return None
+                
+                columns = [desc.name for desc in cur.description]
+                return dict(zip(columns, row))
+        except Exception as e:
+            print(f"Erro ao buscar cliente por CPF/CNPJ {cpf_cnpj}: {e}")
             return None
         finally:
             if conn: conn.close()
@@ -162,7 +193,6 @@ class ClienteDAO:
                 if email is not None:
                     fields_cliente.append("email = %s")
                     values_cliente.append(email)
-                # ... (adicione aqui outros campos do cliente, como cpf_cnpj, telefone, sexo)
                 if cpf_cnpj is not None:
                     fields_cliente.append("cpf_cnpj = %s")
                     values_cliente.append(cpf_cnpj)
@@ -184,14 +214,12 @@ class ClienteDAO:
                     fields_localizacao = []
                     values_localizacao = []
                     
-                    # Usa get() para checar se a chave existe antes de tentar atualizar
                     if localizacao_data.get('cep') is not None:
                         fields_localizacao.append("cep = %s")
                         values_localizacao.append(localizacao_data['cep'])
                     if localizacao_data.get('logradouro') is not None:
                         fields_localizacao.append("logradouro = %s")
                         values_localizacao.append(localizacao_data['logradouro'])
-                    # ... (adicione aqui outros campos de localização)
                     if localizacao_data.get('numero') is not None:
                         fields_localizacao.append("numero = %s")
                         values_localizacao.append(localizacao_data['numero'])

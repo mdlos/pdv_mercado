@@ -1,16 +1,18 @@
+
 import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Environment } from "../environment";
+import { AuthService, type IAuthResponse } from "../services/services/api/auth/AuthService";
 
-interface IAuthOptions {
+interface ILoginData {
   email: string;
-  password: string;
+  senha: string;
 }
 
 interface IAuthContextData {
   isAuthenticated: boolean;
-  authOptions?: IAuthOptions;
-  login: (options: IAuthOptions, callback?: () => void) => void;
+  user?: Omit<IAuthResponse, 'token'>;
+  login: (dados: ILoginData) => Promise<string | void>;
   logout: () => void;
 }
 
@@ -26,17 +28,17 @@ export const useAuthContext = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const storedAuth = localStorage.getItem('auth_data');
-    return !!storedAuth;
+    const token = localStorage.getItem('ACCESS_TOKEN');
+    return !!token;
   });
 
-  const [authOptions, setAuthOptions] = useState<IAuthOptions | undefined>(() => {
-    const storedAuth = localStorage.getItem('auth_data');
-    if (storedAuth) {
+  const [user, setUser] = useState<Omit<IAuthResponse, 'token'> | undefined>(() => {
+    const storedUser = localStorage.getItem('USER_DATA');
+    if (storedUser) {
       try {
-        return JSON.parse(storedAuth);
+        return JSON.parse(storedUser);
       } catch (error) {
-        console.error("Falha ao analisar os dados de autenticação.", error);
+        console.error("Falha ao analisar os dados do usuário.", error);
         return undefined;
       }
     }
@@ -45,27 +47,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const navigate = useNavigate();
 
-  const login = (options: IAuthOptions, callback?: () => void) => {
-    localStorage.setItem('auth_data', JSON.stringify(options));
-    setAuthOptions(options);
-    setIsAuthenticated(true);
+  const login = async (dados: ILoginData): Promise<string | void> => {
+    const result = await AuthService.login(dados);
 
-    if (callback) {
-      callback();
+    if (result instanceof Error) {
+      return result.message;
     } else {
+      localStorage.setItem('ACCESS_TOKEN', result.token);
+      localStorage.setItem('USER_DATA', JSON.stringify({
+        cpf: result.cpf,
+        nome: result.nome,
+        cargo: result.cargo
+      }));
+
+      setUser({
+        cpf: result.cpf,
+        nome: result.nome,
+        cargo: result.cargo
+      });
+      setIsAuthenticated(true);
       navigate(Environment.ROTA_INICIAL);
     }
   }
 
   const logout = () => {
-    localStorage.removeItem('auth_data');
+    localStorage.removeItem('ACCESS_TOKEN');
+    localStorage.removeItem('USER_DATA');
     setIsAuthenticated(false);
-    setAuthOptions(undefined);
+    setUser(undefined);
     navigate(Environment.ROTA_LOGIN);
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, authOptions, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

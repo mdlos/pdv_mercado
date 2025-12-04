@@ -25,6 +25,7 @@ const Clientes = () => {
         sexo: '',
         celular: '',
         email: '',
+        cep: '', // NOVO CAMPO
         logradouro: '',
         numero: '',
         cidade: '',
@@ -41,20 +42,16 @@ const Clientes = () => {
         { id: 'email', label: 'Email', minWidth: 170 },
         { id: 'telefone', label: 'Telefone', minWidth: 100 },
         { id: 'sexo', label: 'Sexo', minWidth: 100 },
-        // Campos aninhados de localização precisam de tratamento especial na renderização da tabela se ListTable não suportar acesso profundo
-        // Por enquanto, assumindo que ListTable renderiza o que está na raiz ou precisamos achatar os dados para a tabela
     ], []);
 
     // Função para buscar dados
     const fetchData = () => {
         setIsLoading(true);
-        // A API mockada getAll não aceita paginação real ainda, mas vamos preparar
         ClienteService.getAll()
             .then((result) => {
                 if (result instanceof Error) {
                     alert(result.message);
                 } else {
-                    // Filtragem local temporária até a API suportar filtros
                     let filteredData = result.data;
 
                     if (busca.nome) {
@@ -66,7 +63,6 @@ const Clientes = () => {
 
                     setTotalCount(filteredData.length);
 
-                    // Paginação local
                     const start = page * rowsPerPage;
                     const end = start + rowsPerPage;
                     setRows(filteredData.slice(start, end));
@@ -77,7 +73,7 @@ const Clientes = () => {
 
     useEffect(() => {
         fetchData();
-    }, [page, rowsPerPage, busca]); // Recarrega quando paginação ou busca mudam
+    }, [page, rowsPerPage, busca]);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -92,6 +88,7 @@ const Clientes = () => {
             sexo: '',
             celular: '',
             email: '',
+            cep: '',
             logradouro: '',
             numero: '',
             cidade: '',
@@ -105,14 +102,15 @@ const Clientes = () => {
         const dadosParaEnviar = {
             nome: formData.nome,
             cpf_cnpj: formData.cpf,
-            email: formData.email,
-            telefone: formData.celular,
-            sexo: formData.sexo,
+            email: formData.email || undefined,
+            telefone: formData.celular || undefined,
+            sexo: formData.sexo || undefined,
             localizacao: {
+                cep: formData.cep, // NOVO CAMPO
                 logradouro: formData.logradouro,
                 numero: formData.numero,
                 cidade: formData.cidade,
-                estado: formData.estado
+                uf: formData.estado // Backend espera 'uf'
             }
         };
 
@@ -157,7 +155,7 @@ const Clientes = () => {
     };
 
     const handleSearch = () => {
-        setPage(0); // Volta para a primeira página ao buscar
+        setPage(0);
         fetchData();
     };
 
@@ -174,10 +172,11 @@ const Clientes = () => {
             sexo: row.sexo || '',
             celular: row.telefone || '',
             email: row.email || '',
+            cep: row.localizacao?.cep || '',
             logradouro: row.localizacao?.logradouro || '',
             numero: row.localizacao?.numero || '',
             cidade: row.localizacao?.cidade || '',
-            estado: row.localizacao?.estado || ''
+            estado: row.localizacao?.uf || '' // Backend retorna 'uf'
         });
         setOpen(true);
     };
@@ -321,6 +320,16 @@ const Clientes = () => {
                     </Box>
                     <Box className="flex flex-row justify-between gap-2 w-full">
                         <TextField
+                            name="cep"
+                            value={formData.cep}
+                            onChange={handleChange}
+                            id="outlined-basic-cep"
+                            className="w-40"
+                            label="CEP"
+                            variant="outlined"
+                            size='small'
+                        />
+                        <TextField
                             name="logradouro"
                             value={formData.logradouro}
                             onChange={handleChange}
@@ -358,7 +367,7 @@ const Clientes = () => {
                             onChange={handleChange}
                             id="outlined-basic-estado"
                             className="w-100"
-                            label="Estado"
+                            label="Estado (UF)"
                             variant="outlined"
                             size='small'
                         />
