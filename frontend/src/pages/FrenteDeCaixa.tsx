@@ -23,6 +23,7 @@ import {
   ClienteService, type IDetalheCliente,
   VendaService, type IVenda
 } from '../shared/services/services/api';
+import { useAuth } from '../shared/contexts';
 
 interface IItemCarrinho {
   id: number;
@@ -33,6 +34,7 @@ interface IItemCarrinho {
 type FormaPagamento = 'dinheiro' | 'debito' | 'credito' | 'pix' | 'promissoria';
 
 const FrenteDeCaixa = () => {
+  const { user } = useAuth();
   // Estados do Carrinho e Venda
   const [produtosLista, setProdutosLista] = useState<IDetalheProduto[]>([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState<IDetalheProduto | null>(null);
@@ -173,7 +175,7 @@ const FrenteDeCaixa = () => {
     const dadosVenda: Omit<IVenda, 'id_venda'> = {
       // data_venda: O backend gera automaticamente
       cpf_cliente: clienteIdentificado?.cpf_cnpj ? clienteIdentificado.cpf_cnpj.replace(/\D/g, '') : null,
-      cpf_funcionario: '00000000000', // TODO: Pegar do contexto de autenticação (apenas números)
+      cpf_funcionario: user?.cpf || '00000000000', // Pega do contexto de autenticação
       // valor_total: O backend calcula
       desconto: parseFloat(desconto) || 0,
       itens: carrinho.map(item => ({

@@ -246,9 +246,9 @@ class VendaDAO:
                     
                 # Filtro 2: CPF do Cliente
                 if cpf_cliente:
-                    # 🛑 CORREÇÃO FINAL AQUI: Limpa a coluna do DB antes de comparar com o CPF limpo (cpf_cliente)
-                    where_clauses.append("REGEXP_REPLACE(v.cpf_funcionario, '[^0-9]', '', 'g') = %s") 
-                    params.append(cpf_cliente) # cpf_cliente é o valor limpo do Python
+                    # 🛑 CORREÇÃO: Filtrar pelo CPF do CLIENTE, não do funcionário
+                    where_clauses.append("REGEXP_REPLACE(v.cpf_cnpj_cliente, '[^0-9]', '', 'g') = %s") 
+                    params.append(cpf_cliente) 
                     
                 # Constrói a cláusula WHERE
                 if where_clauses:
@@ -260,6 +260,33 @@ class VendaDAO:
                 rows_fetched = cur.fetchall() 
                 
                 vendas_list = [dict(r) for r in rows_fetched]
+
+                # 🛑 CORREÇÃO: Buscar ITENS e formatar PAGAMENTOS para cada venda
+                # Isso é necessário porque o VendaSchema exige esses campos aninhados.
+                for venda in vendas_list:
+                    # 1. Buscar Itens
+                    sql_itens = """
+                        SELECT 
+                            vi.codigo_produto,
+                            vi.quantidade_venda,
+                            vi.preco_unitario,
+                            vi.valor_total AS subtotal,
+                            p.nome AS nome_produto
+                        FROM venda_item vi
+                        JOIN produto p ON vi.codigo_produto = p.codigo_produto
+                        WHERE vi.id_venda = %s;
+                    """
+                    cur.execute(sql_itens, (venda['id_venda'],))
+                    item_records = cur.fetchall()
+                    venda['itens'] = [dict(r) for r in item_records]
+
+                    # 2. Formatar Pagamentos (Lista)
+                    venda['pagamentos'] = [{
+                        'id_tipo': venda['id_tipo_pagamento'],
+                        'valor_pago': venda['valor_pago'],
+                        'troco': venda['troco'],
+                        'descricao': venda.get('tipo_pagamento_descricao')
+                    }]
             
             return vendas_list
             

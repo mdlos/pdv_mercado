@@ -79,7 +79,6 @@ export const AppRoutes = () => {
       <Route path={Environment.ROTA_PRODUTOS} element={<Layout><Produtos /></Layout>} />
       <Route path={Environment.ROTA_VENDAS} element={<Layout><Vendas /></Layout>} />
       <Route path={Environment.ROTA_FUNCIONARIOS} element={<Layout><Funcionarios /></Layout>} />
-      <Route path={Environment.ROTA_CAIXAS} element={<Layout><div>Caixas</div></Layout>} />
       <Route path={Environment.ROTA_FRENTE_DE_CAIXA} element={<FrenteDeCaixa />} />
 
       {/* Qualquer rota n'ao e contrada volta para a pagina inicial */}
