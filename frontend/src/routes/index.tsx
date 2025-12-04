@@ -1,6 +1,6 @@
 
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useDrawerContext } from "../shared/contexts";
+import { PrivateRoute, useDrawerContext } from "../shared/contexts";
 import { useEffect } from "react";
 import { Environment } from "../shared/environment";
 
@@ -9,7 +9,7 @@ import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import LoyaltyIcon from '@mui/icons-material/Loyalty';
 import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
-import StorefrontIcon from '@mui/icons-material/Storefront';
+// import StorefrontIcon from '@mui/icons-material/Storefront';
 
 import Home from '../pages/Home';
 import Login from "../pages/Login";
@@ -50,11 +50,11 @@ export const AppRoutes = () => {
         path: Environment.ROTA_FUNCIONARIOS,
         label: "Funcionários",
       },
-      {
-        icon: <StorefrontIcon />,
-        path: Environment.ROTA_CAIXAS,
-        label: "Caixas",
-      },
+      // {
+      //   icon: <StorefrontIcon />,
+      //   path: Environment.ROTA_CAIXAS,
+      //   label: "Caixas",
+      // },
     ]);
   }, []);
 
@@ -63,24 +63,41 @@ export const AppRoutes = () => {
       <Route path={Environment.ROTA_LOGIN} element={<Login />} />
 
       <Route path={Environment.ROTA_FRENTE_DE_CAIXA} element={
-        // <PrivateRoute>
-        <FrenteDeCaixa />
-        // </PrivateRoute>  
+        <PrivateRoute>
+          <FrenteDeCaixa />
+        </PrivateRoute>
       } />
 
       {/* Rota dos elementos da drawer */}
       <Route path={Environment.ROTA_INICIAL} element={
-        // <PrivateRoute>
-        <Layout><Home /></Layout>
-        // </PrivateRoute>
+        <PrivateRoute>
+          <Layout><Home /></Layout>
+        </PrivateRoute>
       } />
-
-      <Route path={Environment.ROTA_CLIENTES} element={<Layout><Clientes /></Layout>} />
-      <Route path={Environment.ROTA_PRODUTOS} element={<Layout><Produtos /></Layout>} />
-      <Route path={Environment.ROTA_VENDAS} element={<Layout><Vendas /></Layout>} />
-      <Route path={Environment.ROTA_FUNCIONARIOS} element={<Layout><Funcionarios /></Layout>} />
-      <Route path={Environment.ROTA_FRENTE_DE_CAIXA} element={<FrenteDeCaixa />} />
-
+      <Route path={Environment.ROTA_CLIENTES} element={
+        <PrivateRoute>
+          <Layout><Clientes /></Layout>
+        </PrivateRoute>
+      } />
+      <Route path={Environment.ROTA_PRODUTOS} element={
+        <PrivateRoute>
+          <Layout><Produtos /></Layout>
+        </PrivateRoute>
+      } />
+      <Route path={Environment.ROTA_VENDAS} element={
+        <PrivateRoute>
+          <Layout><Vendas /></Layout>
+        </PrivateRoute>
+      } />
+      <Route path={Environment.ROTA_FUNCIONARIOS} element={
+        <PrivateRoute>
+          <Layout><Funcionarios /></Layout>
+        </PrivateRoute>} />
+      <Route path={Environment.ROTA_FRENTE_DE_CAIXA} element={
+        <PrivateRoute>
+          <FrenteDeCaixa />
+        </PrivateRoute>} />
+      {/* <Route path={Environment.ROTA_CAIXAS} element={<Layout>Caixas</Layout>} /> */}
       {/* Qualquer rota n'ao e contrada volta para a pagina inicial */}
       <Route path="*" element={<Navigate to={Environment.ROTA_INICIAL} />} />
     </Routes>

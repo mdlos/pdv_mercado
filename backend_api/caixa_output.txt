@@ -1,0 +1,2 @@
+Encontrados 1 caixas abertos:
+ID: 1, CPF: 00000000000, Status: ABERTO

@@ -24,7 +24,7 @@ export type TFuncionarioComTotalCount = {
     totalCount: number;
 }
 
-const getAll = async (page = 1, filter = ''): Promise<TFuncionarioComTotalCount | Error> => {
+const getAll = async (filter = ''): Promise<TFuncionarioComTotalCount | Error> => {
     try {
         const { data } = await Api.get('/funcionarios');
 

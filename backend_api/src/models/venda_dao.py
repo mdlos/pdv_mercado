@@ -7,6 +7,7 @@ from src.utils.formatters import clean_only_numbers
 from src.models.fluxo_caixa_dao import FluxoCaixaDAO 
 from psycopg import rows 
 import psycopg 
+from psycopg.errors import CheckViolation
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +90,10 @@ class VendaDAO:
                         WHERE codigo_produto = %s
                         RETURNING quantidade; 
                     """
-                    cur.execute(estoque_update_sql, (quantidade_vendida, codigo_produto))
+                    try:
+                        cur.execute(estoque_update_sql, (quantidade_vendida, codigo_produto))
+                    except CheckViolation:
+                        raise ValueError(f"Estoque insuficiente para o produto {codigo_produto}.")
                     
                     new_quantity_result = cur.fetchone()
                     
