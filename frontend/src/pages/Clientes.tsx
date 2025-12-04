@@ -3,12 +3,16 @@ import { LayoutBase } from "../shared/layouts/LayoutBase";
 import FormRegister from "../shared/components/FormRegister";
 import { ListTable, type IColumn } from "../shared/components/ListTable";
 import { Filters } from "../shared/components/Filters";
+import { Confirmar } from "../shared/components/Confirmar";
 import { Button, Fab, TextField, Box } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 
 const Clientes = () => {
     const [open, setOpen] = useState(false);
+    const [openConfirm, setOpenConfirm] = useState(false);
+    const [idToDelete, setIdToDelete] = useState<number | string | null>(null);
     const [formData, setFormData] = useState({
+        id: '',
         nome: '',
         cpf: '',
         sexo: '',
@@ -56,6 +60,7 @@ const Clientes = () => {
 
     const handleReset = () => {
         setFormData({
+            id: '',
             nome: '',
             cpf: '',
             sexo: '',
@@ -71,6 +76,7 @@ const Clientes = () => {
     const handleSave = () => {
         console.log("Dados salvos:", formData);
         setOpen(false);
+        handleReset();
     };
 
     const handleChangePage = (newPage: number) => {
@@ -92,6 +98,24 @@ const Clientes = () => {
         // Implementar lógica de limpar filtros aqui
     };
 
+    const handleEdit = (row: any) => {
+        console.log("Editando cliente:", row);
+        setFormData({ ...row }); // Preenche o formulário com os dados da linha
+        setOpen(true);
+    };
+
+    const handleDeleteClick = (row: any) => {
+        setIdToDelete(row.id);
+        setOpenConfirm(true);
+    };
+
+    const handleConfirmDelete = () => {
+        console.log("Deletando cliente ID:", idToDelete);
+        // Implementar lógica de deletar aqui
+        setOpenConfirm(false);
+        setIdToDelete(null);
+    };
+
     return (
         <LayoutBase titulo={"Clientes"}>
             <Filters onSearch={handleSearch} onClear={handleClear} />
@@ -105,17 +129,22 @@ const Clientes = () => {
                     rowsPerPage={rowsPerPage}
                     onPageChange={handleChangePage}
                     onRowsPerPageChange={handleChangeRowsPerPage}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteClick}
                 />
             </Box>
 
             <FormRegister
-                title="Cadastro de Usuário"
+                title={formData.id ? "Editar Cliente" : "Cadastro de Cliente"}
                 buttons={[
                     <Button key="reset" variant="outlined" color="warning" onClick={handleReset}>Resetar</Button>,
                     <Button key="save" variant="contained" color="primary" onClick={handleSave}>Salvar</Button>,
                 ]}
                 open={open}
-                onClose={() => setOpen(false)}
+                onClose={() => {
+                    setOpen(false);
+                    handleReset();
+                }}
             >
                 <Box className="flex flex-col gap-4">
                     <TextField
@@ -219,11 +248,22 @@ const Clientes = () => {
 
             </FormRegister>
 
+            <Confirmar
+                open={openConfirm}
+                title="Confirmar Exclusão"
+                message="Deseja realmente excluir este cliente?"
+                onClose={() => setOpenConfirm(false)}
+                onConfirm={handleConfirmDelete}
+            />
+
             <Fab
                 color="primary"
                 aria-label="add"
                 sx={{ position: "fixed", bottom: "20px", right: "20px" }}
-                onClick={() => setOpen(true)}
+                onClick={() => {
+                    handleReset();
+                    setOpen(true);
+                }}
             >
                 <AddIcon />
             </Fab>

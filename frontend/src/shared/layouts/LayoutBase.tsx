@@ -14,13 +14,13 @@ export const LayoutBase: React.FC<ILayoutBaseProps> = ({ children, titulo }) => 
   return (
     <>
       <Box className="h-full w-full flex flex-col" gap={1}>
-        <Box className="flex items-center" height={theme.spacing(12)}>
+        <Box className="flex items-center" height={theme.spacing(6)}>
           <Typography
             fontWeight="bold"
             whiteSpace="nowrap"
             textOverflow="ellipsis"
             color="var(--font-color)"
-            variant={smDown ? 'h5' : mdDown ? 'h4' : 'h3'}
+            variant={smDown ? 'h5' : mdDown ? 'h4' : 'h4'}
           >
             {titulo}
           </Typography>

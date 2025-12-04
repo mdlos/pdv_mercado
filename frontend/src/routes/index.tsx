@@ -17,6 +17,7 @@ import Login from "../pages/Login";
 import FrenteDeCaixa from "../pages/FrenteDeCaixa";
 import Clientes from "../pages/Clientes";
 import Layout from "../shared/layouts/Layout";
+import Produtos from "../pages/Produtos";
 
 export const AppRoutes = () => {
   const { setDrawerOptions } = useDrawerContext();
@@ -74,7 +75,7 @@ export const AppRoutes = () => {
       } />
 
       <Route path={Environment.ROTA_CLIENTES} element={<Layout><Clientes /></Layout>} />
-      <Route path={Environment.ROTA_PRODUTOS} element={<Layout><div>Produtos</div></Layout>} />
+      <Route path={Environment.ROTA_PRODUTOS} element={<Layout><Produtos /></Layout>} />
       <Route path={Environment.ROTA_VENDAS} element={<Layout><div>Vendas</div></Layout>} />
       <Route path={Environment.ROTA_FUNCIONARIOS} element={<Layout><div>Funcionários</div></Layout>} />
       <Route path={Environment.ROTA_CAIXAS} element={<Layout><div>Caixas</div></Layout>} />

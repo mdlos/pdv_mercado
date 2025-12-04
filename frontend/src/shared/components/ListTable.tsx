@@ -9,8 +9,11 @@ import {
     Typography,
     TablePagination,
     LinearProgress,
-    Box
+    Box,
+    IconButton
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import type { ReactNode } from 'react';
 
 export interface IColumn<T = any> {
@@ -31,6 +34,8 @@ interface IListTableProps<T = any> {
     rowsPerPage: number;
     onPageChange: (newPage: number) => void;
     onRowsPerPageChange: (newRowsPerPage: number) => void;
+    onDelete?: (row: T) => void;
+    onEdit?: (row: T) => void;
 }
 
 export const ListTable = <T extends { id?: string | number } | any>({
@@ -41,7 +46,9 @@ export const ListTable = <T extends { id?: string | number } | any>({
     page,
     rowsPerPage,
     onPageChange,
-    onRowsPerPageChange
+    onRowsPerPageChange,
+    onDelete,
+    onEdit
 }: IListTableProps<T>) => {
     return (
         <Paper elevation={1} sx={{ width: '100%', overflow: 'hidden' }}>
@@ -77,12 +84,17 @@ export const ListTable = <T extends { id?: string | number } | any>({
                                     {column.label}
                                 </TableCell>
                             ))}
+                            {(onDelete || onEdit) && (
+                                <TableCell align="center" sx={{ fontWeight: 'bold', width: 100 }}>
+
+                                </TableCell>
+                            )}
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {!isLoading && rows.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={columns.length} align="center">
+                                <TableCell colSpan={columns.length + ((onDelete || onEdit) ? 1 : 0)} align="center">
                                     <Typography variant="body2" color="textSecondary">
                                         Nenhum registro encontrado.
                                     </Typography>
@@ -103,6 +115,22 @@ export const ListTable = <T extends { id?: string | number } | any>({
                                             </TableCell>
                                         );
                                     })}
+                                    {(onDelete || onEdit) && (
+                                        <TableCell align="center">
+                                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                                                {onEdit && (
+                                                    <IconButton onClick={() => onEdit(row)} color="primary" size="small">
+                                                        <EditIcon />
+                                                    </IconButton>
+                                                )}
+                                                {onDelete && (
+                                                    <IconButton onClick={() => onDelete(row)} color="error" size="small">
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                )}
+                                            </Box>
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             );
                         })}
