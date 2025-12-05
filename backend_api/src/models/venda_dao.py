@@ -156,7 +156,7 @@ class VendaDAO:
                     SELECT 
                         v.*, 
                         tp.descricao AS tipo_pagamento_descricao,
-                        f.nome AS nome_caixa,
+                        CONCAT(f.nome, ' ', f.sobrenome) AS nome_caixa,
                         c.nome AS nome_cliente,
                         cm.cnpj AS mercado_cnpj, 
                         cm.endereco AS mercado_endereco,
@@ -224,7 +224,7 @@ class VendaDAO:
                     SELECT 
                         v.*, 
                         tp.descricao AS tipo_pagamento_descricao,
-                        f.nome AS nome_caixa
+                        CONCAT(f.nome, ' ', f.sobrenome) AS nome_caixa
                     FROM venda v 
                     LEFT JOIN tipo_pagamento tp ON v.id_tipo_pagamento = tp.id_tipo
                     LEFT JOIN funcionario f ON v.cpf_funcionario = f.cpf

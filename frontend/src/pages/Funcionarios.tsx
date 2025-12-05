@@ -48,7 +48,7 @@ const Funcionarios = () => {
             id: 'nome',
             label: 'Nome Completo',
             minWidth: 150,
-            render: (row) => `${row.nome} ${row.sobrenome}`
+            render: (_, row) => `${row.nome} ${row.sobrenome || ''}`
         },
         { id: 'sexo', label: 'Sexo', minWidth: 100 },
         { id: 'nome_social', label: 'Nome Social', minWidth: 100 },

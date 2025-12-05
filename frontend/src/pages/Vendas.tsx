@@ -26,12 +26,17 @@ const Vendas = () => {
             render: (value) => value ? new Date(value).toLocaleString() : '-'
         },
         {
-            id: 'cpf_cliente',
+            id: 'cpf_cnpj_cliente',
             label: 'Cliente (CPF)',
             minWidth: 150,
             render: (value) => value || 'Não identificado'
         },
-        { id: 'cpf_funcionario', label: 'Vendedor (CPF)', minWidth: 150 },
+        {
+            id: 'cpf_funcionario',
+            label: 'Vendedor',
+            minWidth: 150,
+            render: (value, row) => row.nome_caixa ? `${row.nome_caixa}` : value
+        },
         {
             id: 'valor_total',
             label: 'Total',

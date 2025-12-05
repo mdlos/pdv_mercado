@@ -5,7 +5,7 @@ export interface IItemVenda {
     quantidade_venda: number;
     preco_unitario: number;
     subtotal?: number;
-    nome_produto?: string; // Opcional, para exibição
+    nome_produto?: string;
 }
 
 export interface IPagamentoVenda {
@@ -18,7 +18,9 @@ export interface IPagamentoVenda {
 export interface IVenda {
     id_venda?: number;
     cpf_cliente?: string | null;
+    cpf_cnpj_cliente?: string | null;
     cpf_funcionario: string;
+    nome_caixa?: string;
     valor_total?: number;
     desconto?: number;
     troco?: number;
@@ -48,7 +50,7 @@ const create = async (dados: Omit<IVenda, 'id_venda'>): Promise<number | Error> 
     }
 };
 
-const getAll = async (filterData = '', filterCpf = ''): Promise<{ data: IVenda[], totalCount: number } | Error> => {
+const getAll = async (p0: number, filterData = '', filterCpf = ''): Promise<{ data: IVenda[], totalCount: number } | Error> => {
     try {
         let url = '/vendas';
         const params = new URLSearchParams();
