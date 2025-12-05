@@ -1,0 +1,9 @@
+.outlined-basic {
+    color: var(--font-color);
+    outline-color: var(--font-color);
+}
+
+.outlined-basic:focus {
+    color: var(--btn-principal);
+    outline-color: var(--btn-principal);
+}
