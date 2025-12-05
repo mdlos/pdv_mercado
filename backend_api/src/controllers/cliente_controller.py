@@ -5,7 +5,7 @@ from src.schemas.cliente_schema import ClienteSchema
 from src.models.cliente_dao import ClienteDAO
 from src.utils.formatters import clean_only_numbers
 from http import HTTPStatus
-import logging # Adicionar import para log
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +14,7 @@ cliente_dao = ClienteDAO()
 cliente_schema = ClienteSchema()
 clientes_schema = ClienteSchema(many=True)
 
-# -----------------------------------------------------------
-# C - CREATE (Criação de Novo Cliente) - MANTIDO
-# -----------------------------------------------------------
+
 @cliente_bp.route('/', methods=['POST'], strict_slashes=False)
 def create_cliente():
     """ Rota para criar um novo cliente. """
@@ -54,9 +52,6 @@ def create_cliente():
         logger.error(f"Erro interno ao criar cliente: {e}")
         return jsonify({"message": f"Erro interno ao criar cliente: {e}"}), HTTPStatus.INTERNAL_SERVER_ERROR
 
-# -----------------------------------------------------------
-# R - READ ALL (Busca Todos) - MANTIDO
-# -----------------------------------------------------------
 @cliente_bp.route('/', methods=['GET'], strict_slashes=False)
 def get_all_clientes():
     """ Rota para buscar todos os clientes cadastrados. """
@@ -68,9 +63,6 @@ def get_all_clientes():
     else:
         return jsonify([]), HTTPStatus.OK
 
-# -----------------------------------------------------------
-# R - READ ONE (Busca UNIFICADA por ID ou CPF/CNPJ) <--- ROTA CORRIGIDA
-# -----------------------------------------------------------
 @cliente_bp.route('/<string:identifier>', methods=['GET'])
 def get_cliente_unificado(identifier):
     """ 
@@ -97,9 +89,6 @@ def get_cliente_unificado(identifier):
     else:
         return jsonify({"message": f"Cliente com ID ou CPF/CNPJ {identifier} não encontrado."}), HTTPStatus.NOT_FOUND
 
-# -----------------------------------------------------------
-# U - UPDATE (Atualização) - MANTIDO
-# -----------------------------------------------------------
 @cliente_bp.route('/<int:id_cliente>', methods=['PUT'])
 def update_cliente(id_cliente):
     """ Rota para atualizar dados do cliente. """
@@ -137,9 +126,6 @@ def update_cliente(id_cliente):
     else:
         return jsonify({"message": "Erro interno ao atualizar cliente.", "status": "Error"}), HTTPStatus.INTERNAL_SERVER_ERROR
 
-# -----------------------------------------------------------
-# D - DELETE (Exclusão) - MANTIDO
-# -----------------------------------------------------------
 @cliente_bp.route('/<int:id_cliente>', methods=['DELETE'])
 def delete_cliente(id_cliente):
     """ Rota para deletar um cliente e sua localização associada. """

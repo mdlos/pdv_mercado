@@ -12,10 +12,6 @@ class ProdutoDAO:
     def __init__(self):
         self.table_name = "produto"
     
-    # -----------------------------------------------------------------
-    # R - READ (Busca) - MÉTODOS CORRIGIDOS
-    # -----------------------------------------------------------------
-    
     def find_all(self, termo_busca=None):
         """ Retorna todos os produtos, opcionalmente filtrando por nome ou codigo_barras. """
         conn = None
@@ -82,7 +78,7 @@ class ProdutoDAO:
             if conn:
                 conn.close()
 
-    def find_by_codigo_barras(self, codigo_barras: str): # <--- MÉTODO FALTANTE ADICIONADO
+    def find_by_codigo_barras(self, codigo_barras: str): 
         """ Retorna um produto pelo seu código de barras (chave de negócio). """
         conn = None
         try:
@@ -112,10 +108,6 @@ class ProdutoDAO:
             if conn:
                 conn.close()
 
-    # -----------------------------------------------------------------
-    # C - CREATE (Inserção) - MANTIDO
-    # -----------------------------------------------------------------
-
     def insert(self, nome: str, descricao: str, preco: str, codigo_barras: str = None, initial_quantity: int = DEFAULT_INITIAL_QUANTITY):
         """ Insere um novo produto e inicializa seu estoque na mesma transação. """
         conn = None
@@ -123,7 +115,7 @@ class ProdutoDAO:
         try:
             conn = get_db_connection()
             with conn.cursor() as cur:
-                # 1. INSERE O PRODUTO E RETORNA O ID
+                # INSERE O PRODUTO E RETORNA O ID
                 cur.execute(
                     f"""
                     INSERT INTO {self.table_name} ("nome", "descricao", "preco", "codigo_barras")
@@ -134,7 +126,7 @@ class ProdutoDAO:
                 )
                 last_id = cur.fetchone()[0]
                 
-                # 2. INSERE O REGISTRO DE ESTOQUE
+                # INSERE O REGISTRO DE ESTOQUE
                 cur.execute(
                     """
                     INSERT INTO estoque (codigo_produto, quantidade)
@@ -143,7 +135,6 @@ class ProdutoDAO:
                     (last_id, initial_quantity)
                 )
 
-                # 3. COMMIT (Transação atômica)
                 conn.commit()
                 return last_id
         except Exception as e:
@@ -154,10 +145,6 @@ class ProdutoDAO:
         finally:
             if conn:
                 conn.close()
-
-    # -----------------------------------------------------------------
-    # U - UPDATE (Atualização) - MANTIDO
-    # -----------------------------------------------------------------
 
     def update(self, codigo_produto: int, **kwargs):
         """ 
@@ -180,7 +167,6 @@ class ProdutoDAO:
             
             values.append(codigo_produto)
             
-            # SQL: Cláusula WHERE
             sql = f'UPDATE {self.table_name} SET {", ".join(set_clauses)} WHERE "codigo_produto" = %s'
             
             with conn.cursor() as cur:
@@ -198,20 +184,16 @@ class ProdutoDAO:
             if conn:
                 conn.close()
                 
-    # -----------------------------------------------------------------
-    # D - DELETE (Exclusão) - MANTIDO
-    # -----------------------------------------------------------------
-
     def delete(self, codigo_produto: int):
         """ Deleta um produto e seu registro de estoque. """
         conn = None
         try:
             conn = get_db_connection()
             with conn.cursor() as cur:
-                # 1. DELETA O REGISTRO DE ESTOQUE
+                # DELETA O REGISTRO DE ESTOQUE
                 cur.execute(f'DELETE FROM estoque WHERE "codigo_produto" = %s', (codigo_produto,))
                 
-                # 2. DELETA O PRODUTO
+                # DELETA O PRODUTO
                 cur.execute(f'DELETE FROM {self.table_name} WHERE "codigo_produto" = %s', (codigo_produto,))
                 rows_affected = cur.rowcount
                 

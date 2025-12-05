@@ -55,7 +55,7 @@ const FrenteDeCaixa = () => {
   const [parcelas, setParcelas] = useState<number>(1);
   const [isSavingVenda, setIsSavingVenda] = useState(false);
 
-  // Helper para mapear forma de pagamento
+  // Mapeia forma de pagamento
   const mapFormaPagamentoToId = (forma: FormaPagamento): number => {
     switch (forma) {
       case 'dinheiro': return 1;
@@ -118,7 +118,7 @@ const FrenteDeCaixa = () => {
   // Funções de Cliente
   const handleBuscarCliente = () => {
     setIsLoadingCliente(true);
-    // Tenta buscar na lista geral primeiro (ideal seria endpoint específico de busca por CPF)
+    // Tenta buscar na lista geral primeiro
     ClienteService.getAll()
       .then((result) => {
         if (result instanceof Error) {
@@ -216,7 +216,7 @@ const FrenteDeCaixa = () => {
 
       <Box sx={{ backgroundColor: 'var(--background-color)', marginTop: '100px', padding: 2, flex: 1, overflow: 'hidden', display: 'flex', gap: 2 }}>
 
-        {/* Painel Esquerdo (Busca e Cliente) */}
+        {/* Busca e Cliente */}
         <Paper elevation={3} sx={{ p: 3, width: '35%', display: 'flex', flexDirection: 'column', gap: 3, overflowY: 'auto' }}>
 
           {/* Cliente */}

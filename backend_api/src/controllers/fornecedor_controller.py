@@ -12,28 +12,26 @@ logger = logging.getLogger(__name__)
 fornecedor_bp = Blueprint('fornecedor', __name__)
 fornecedor_dao = FornecedorDAO()
 fornecedor_schema = FornecedorSchema()
-fornecedores_schema = FornecedorSchema(many=True) # Para listar todos
+fornecedores_schema = FornecedorSchema(many=True) 
 
-# -----------------------------------------------------------
-# C - CREATE (Criação de Novo Fornecedor) - MANTIDO
-# -----------------------------------------------------------
+
 @fornecedor_bp.route('/', methods=['POST'])
 def create_fornecedor():
     """ Rota para criar um novo fornecedor. """
     data = request.get_json()
     
-    # 1. Validação dos dados
+    # Validação dos dados
     try:
         valid_data = fornecedor_schema.load(data)
     except Exception as e:
         error_details = getattr(e, 'messages', str(e))
         return jsonify({"message": "Erro de validação", "errors": error_details}), HTTPStatus.BAD_REQUEST
 
-    # 2. Processa e Limpa os dados
+    # Processa e Limpa os dados
     cnpj_limpo = clean_only_numbers(valid_data['cnpj'])
     localizacao_data = valid_data.pop('localizacao', None)
     
-    # 3. Inserção no Banco de Dados
+    # Inserção no Banco de Dados
     try:
         id_inserido = fornecedor_dao.insert(
             cnpj=cnpj_limpo,
@@ -55,9 +53,7 @@ def create_fornecedor():
         logger.error(f"Erro inesperado ao criar fornecedor: {e}")
         return jsonify({"message": f"Erro interno no servidor: {e}"}), HTTPStatus.INTERNAL_SERVER_ERROR
 
-# -----------------------------------------------------------
-# R - READ (Busca por ID e Todos)
-# -----------------------------------------------------------
+
 @fornecedor_bp.route('/', methods=['GET'])
 def get_all_fornecedores():
     """ Rota para listar todos os fornecedores. """
@@ -77,15 +73,12 @@ def get_fornecedor(id_fornecedor):
     else:
         return jsonify({"message": f"Fornecedor com ID {id_fornecedor} não encontrado."}), HTTPStatus.NOT_FOUND
 
-# -----------------------------------------------------------
-# U - UPDATE (Atualização Atômica) - NOVO
-# -----------------------------------------------------------
+
 @fornecedor_bp.route('/<int:id_fornecedor>', methods=['PUT'])
 def update_fornecedor(id_fornecedor):
     """ Rota para atualizar dados do fornecedor. """
     data = request.get_json()
     
-    # 1. Validação (partial=True)
     try:
         valid_data = fornecedor_schema.load(data, partial=True)
     except Exception as e:
@@ -95,7 +88,6 @@ def update_fornecedor(id_fornecedor):
     if not valid_data:
         return jsonify({"message": "Nenhum dado válido fornecido para atualização."}), HTTPStatus.BAD_REQUEST
 
-    # 2. Separação dos dados
     localizacao_data = valid_data.pop('localizacao', None)
     
     # 3. Limpeza de CNPJ/Celular (se fornecidos)
@@ -104,14 +96,12 @@ def update_fornecedor(id_fornecedor):
     if 'celular' in valid_data and valid_data['celular']:
         valid_data['celular'] = clean_only_numbers(valid_data['celular'])
         
-    # 4. Chamada ao DAO para o UPDATE
     rows_affected = fornecedor_dao.update(
         id_fornecedor=id_fornecedor,
         localizacao_data=localizacao_data,
         **valid_data 
     )
 
-    # 5. Resposta
     if rows_affected == 1:
         return jsonify({"message": f"Fornecedor {id_fornecedor} atualizado com sucesso."}), HTTPStatus.OK
     elif rows_affected == 0:
@@ -119,9 +109,6 @@ def update_fornecedor(id_fornecedor):
     else:
         return jsonify({"message": "Erro interno ao atualizar fornecedor.", "status": "Error"}), HTTPStatus.INTERNAL_SERVER_ERROR
 
-# -----------------------------------------------------------
-# D - DELETE (Exclusão por ID) - MANTIDO
-# -----------------------------------------------------------
 @fornecedor_bp.route('/<int:id_fornecedor>', methods=['DELETE'])
 def delete_fornecedor(id_fornecedor):
     """ Rota para deletar um fornecedor e sua localização associada. """

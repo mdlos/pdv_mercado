@@ -11,7 +11,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 # --- CONFIGURAÇÕES E CONSTANTES DE TESTE ---
-# 🛑 ATENÇÃO: Esses CPFs/IDs devem ser garantidos no seu DB de teste
 CPF_FUNCIONARIO_TESTE = '77788899901'
 EMAIL_FUNCIONARIO_TESTE = 'caixa.venda.test@pdv.com'
 CPF_CLIENTE_TESTE = '12345678914'
@@ -32,7 +31,6 @@ def criar_produto_local(initial_quantity: int):
         cur = conn.cursor()
         
         # 1. Inserir Produto (usando um ID alto para evitar conflito)
-        # 🛑 ATENÇÃO: O PREÇO ESTÁ FIXO EM 10.00 AQUI
         codigo_produto = 400 + initial_quantity 
         cur.execute("""
             INSERT INTO produto (codigo_produto, nome, descricao, preco) 
@@ -76,7 +74,6 @@ def garantir_caixa_aberto(cpf_funcionario):
         return fluxo_caixa_dao.abrir_caixa(cpf_funcionario, Decimal('100.00'))
     return id_aberto
 
-# 🛑 CORREÇÃO CRÍTICA AQUI: Tornar o valor pago dinâmico
 def realizar_venda_simulada_data(quantidade_venda: int, codigo_produto: int, preco_unitario: Decimal = Decimal('10.00')):
     """ 
     Retorna dados de venda formatados, prontos para o Schema. 
@@ -97,7 +94,6 @@ def realizar_venda_simulada_data(quantidade_venda: int, codigo_produto: int, pre
         "pagamentos": [
             {
                 "id_tipo": ID_TIPO_PAGAMENTO_DINHEIRO, 
-                # 🛑 O valor pago agora é o TOTAL da venda, eliminando a ValidationError.
                 "valor_pago": valor_total_venda 
             }
         ]
@@ -120,21 +116,21 @@ def setup_teardown_module():
     try:
         cur = conn.cursor()
         
-        # 1. INSERIR FUNCIONÁRIO 
+        # INSERIR FUNCIONÁRIO 
         cur.execute("""
             INSERT INTO funcionario (cpf, nome, email, senha, id_tipo_funcionario) 
             VALUES (%s, 'Caixa Transacao', %s, 'hash_transacao', 1)
             ON CONFLICT (cpf) DO NOTHING;
         """, (CPF_FUNCIONARIO_TESTE, EMAIL_FUNCIONARIO_TESTE))
 
-        # 2. INSERIR TIPO PAGAMENTO (ID 1 = Dinheiro)
+        # INSERIR TIPO PAGAMENTO (ID 1 = Dinheiro)
         cur.execute("""
             INSERT INTO tipo_pagamento (id_tipo, descricao) 
             OVERRIDING SYSTEM VALUE VALUES (%s, 'Dinheiro') 
             ON CONFLICT (id_tipo) DO NOTHING;
         """, (ID_TIPO_PAGAMENTO_DINHEIRO,))
         
-        # 3. GARANTE QUE O CLIENTE EXISTE (Para evitar ValueError no DAO)
+        # GARANTE QUE O CLIENTE EXISTE (Para evitar ValueError no DAO)
         cur.execute("""
             INSERT INTO cliente (cpf_cnpj, nome, telefone) 
             VALUES (%s, 'Cliente Teste', '99999999999') 
@@ -239,11 +235,11 @@ def test_03_venda_falha_por_estoque_insuficiente():
     # A função utilitária agora garante que R$ 100.00 serão pagos, passando pela validação do Schema.
     validated_data = realizar_venda_simulada_data(quantidade_venda=QUANTIDADE_VENDIDA, codigo_produto=codigo_produto) 
     
-    # 🛑 Esperar o erro de CHECK VIOLATION do PostgreSQL (ocorre no DAO, após a validação do Schema)
+    # Espera o erro de CHECK VIOLATION do PostgreSQL (ocorre no DAO, após a validação do Schema)
     with pytest.raises(CheckViolation):
         venda_dao.registrar_venda(validated_data)
         
-    # 3. VERIFICAÇÃO: O estoque deve ter sido restaurado (Rollback)
+    # VERIFICAÇÃO: O estoque deve ter sido restaurado (Rollback)
     estoque_final = buscar_estoque_local(codigo_produto)
     assert estoque_final == estoque_inicial 
 
@@ -252,11 +248,11 @@ def test_03_registrar_venda_rapida_sem_cliente_sucesso():
     """
     Verifica a transação completa (Venda, Itens, Estoque, Fluxo) sem CPF/ID de cliente.
     """
-    # 1. SETUP: Abre o caixa.
+    # SETUP: Abre o caixa.
     id_fluxo = garantir_caixa_aberto(CPF_FUNCIONARIO_TESTE)
     codigo_produto, estoque_inicial = criar_produto_local(initial_quantity=5)
     
-    # 2. PREPARA DADOS SEM CLIENTE (Valor total 1 * 5.00 = 5.00)
+    # PREPARA DADOS SEM CLIENTE (Valor total 1 * 5.00 = 5.00)
     dados_venda_base = {
         "cpf_funcionario": CPF_FUNCIONARIO_TESTE,
         "itens": [
@@ -270,12 +266,12 @@ def test_03_registrar_venda_rapida_sem_cliente_sucesso():
     # O Schema faz o cálculo de total e troco na carga
     validated_data = venda_schema.load(dados_venda_base)
     
-    # 3. REGISTRA A VENDA
+    # REGISTRA A VENDA
     id_venda = venda_dao.registrar_venda(validated_data)
     
     assert id_venda is not None
     
-    # 4. VERIFICAÇÕES
+    # VERIFICAÇÕES
     venda_record = venda_dao.buscar_por_id(id_venda)
     assert venda_record['id_cliente'] is None
     assert venda_record['cpf_cnpj_cliente'] is None 

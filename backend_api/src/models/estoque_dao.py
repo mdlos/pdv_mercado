@@ -10,10 +10,6 @@ class EstoqueDAO:
     def __init__(self):
         self.table_name = "estoque"
     
-    # -----------------------------------------------------------------
-    # C - CREATE (Inicializa estoque)
-    # -----------------------------------------------------------------
-    
     def insert(self, codigo_produto: int, quantidade: int):
         """ Inicializa o registro de estoque para um novo produto. """
         conn = None
@@ -30,7 +26,7 @@ class EstoqueDAO:
                     (codigo_produto, quantidade)
                 )
                 conn.commit()
-                return codigo_produto
+                # return codigo_produto
         except Exception as e:
             logger.error(f"Erro ao inicializar estoque para produto {codigo_produto}: {e}")
             if conn: conn.rollback()
@@ -38,9 +34,6 @@ class EstoqueDAO:
         finally:
             if conn: conn.close()
             
-    # -----------------------------------------------------------------
-    # R - READ (Busca Estoque)
-    # -----------------------------------------------------------------
     
     def find_by_product_id(self, codigo_produto: int):
         """ Retorna o registro de estoque pelo código do produto. """
@@ -59,9 +52,6 @@ class EstoqueDAO:
             return None
         finally:
             if conn: conn.close()
-# -----------------------------------------------------------------
-    # U - UPDATE (Atualiza a quantidade)
-    # -----------------------------------------------------------------
 
     def update_quantity(self, codigo_produto: int, nova_quantidade: int):
         """ 
@@ -82,7 +72,6 @@ class EstoqueDAO:
         except Exception as e:
             logger.error(f"Erro ao atualizar estoque de produto {codigo_produto}: {e}")
             if conn: conn.rollback()
-            # 🔑 CORREÇÃO CRÍTICA: Relança a exceção (IntegrityError) para o Pytest
             raise e 
         finally:
             if conn: conn.close()

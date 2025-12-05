@@ -16,7 +16,6 @@ class TipoFuncionarioDAO:
         try:
             conn = get_db_connection()
             with conn.cursor() as cur:
-                # Retorna o ID e o nome do cargo para o Front-end
                 cur.execute(f"SELECT id_tipo_funcionario, cargo FROM {self.table_name} ORDER BY id_tipo_funcionario")
                 columns = [desc[0] for desc in cur.description]
                 return [dict(zip(columns, row)) for row in cur.fetchall()]

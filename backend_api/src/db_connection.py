@@ -4,7 +4,6 @@ import psycopg
 import os
 from dotenv import load_dotenv 
 
-# Garante que as variáveis do .env estão carregadas
 load_dotenv() 
 
 def get_db_connection():
@@ -15,13 +14,12 @@ def get_db_connection():
     try:
         conn = psycopg.connect(
             host=os.getenv("DB_HOST"),
-            dbname=os.getenv("DB_NAME"),  # psycop v3 usa 'dbname'
+            dbname=os.getenv("DB_NAME"),  
             user=os.getenv("DB_USER"),
             password=os.getenv("DB_PASSWORD"),
             port=os.getenv("DB_PORT", "5432") 
         )
         return conn
     except Exception as e:
-        # Imprime o erro no console e retorna None, que o DAO deve tratar.
         print(f"ERRO DE CONEXÃO COM O BANCO DE DADOS (psycopg v3): {e}")
         return None

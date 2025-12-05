@@ -8,10 +8,9 @@ logger = logging.getLogger(__name__)
 
 class CupomDAO:
 
-    # 🛑 CORREÇÃO AQUI: cpf_cliente removido da definição do argumento
     def create_cupom(self, cpf_caixa: str, numero_nf: str, itens_vendidos: list, 
                     condicao_pagamento: str, valor_pago: float,
-                    id_cliente: int = None): # 🛑 cpf_cliente removido daqui
+                    id_cliente: int = None):
         """
         Cria o cupom de venda e todos os itens da transação em uma única transação atômica.
         :param cpf_caixa: CPF do funcionário (string).
@@ -23,12 +22,11 @@ class CupomDAO:
             return None
         
         try:
-            # 1. Cálculos Essenciais
+            # Cálculos Essenciais
             valor_total = sum(item['quantidade'] * item['preco_unitario'] for item in itens_vendidos)
             troco = max(0, valor_pago - valor_total) if condicao_pagamento.upper() == 'DINHEIRO' else 0
 
-            # 2. INSERE O CABEÇALHO DO CUPOM
-            # 🛑 CORREÇÃO AQUI: cpf_cliente removido do INSERT
+            # INSERE O CABEÇALHO DO CUPOM
             sql_cupom = """
             INSERT INTO cupom (
                 numero_nf, data_emissao, valor_total, cpf_caixa, id_cliente, 
@@ -45,7 +43,7 @@ class CupomDAO:
             ))
             id_cupom = cur.fetchone()[0]
             
-            # 3. INSERE OS ITENS DO CUPOM (sem alterações)
+            # INSERE OS ITENS DO CUPOM
             sql_itens = """
             INSERT INTO item_cupom (id_cupom, codigo_produto, quantidade, preco_unitario)
             VALUES (%s, %s, %s, %s);
@@ -68,7 +66,7 @@ class CupomDAO:
         except Exception as e:
             logger.error(f"Erro ao criar Cupom {numero_nf}: {e}")
             if conn: conn.rollback()
-            raise # Propaga a exceção para o teste 'empty_items_fails'
+            raise
         finally:
             if conn: conn.close()
             
@@ -84,13 +82,12 @@ class CupomDAO:
         try:
             with conn.cursor() as cur:
                 
-                # 1. CONSULTA PRINCIPAL: Busca o cabeçalho, Caixa, Cliente e Mercado (dados únicos)
-                # 🛑 CORREÇÃO AQUI: Removendo 'c.cpf_cliente' do SELECT
+                # CONSULTA PRINCIPAL: Busca o cabeçalho, Caixa, Cliente e Mercado (dados únicos)
                 sql_header = """
                     SELECT 
                         c.numero_nf, c.data_emissao, c.valor_total, c.condicao_pagamento, c.valor_pago, c.troco,
                         f.nome AS nome_caixa, f.cpf AS cpf_caixa_fk,
-                        cl.nome AS nome_cliente, NULL AS cpf_informado, -- 🛑 Retorna NULL para cpf_informado
+                        cl.nome AS nome_cliente, NULL AS cpf_informado,
                         cm.cnpj, cm.razao_social, cm.endereco, cm.contato
                     FROM cupom c
                     LEFT JOIN funcionario f ON c.cpf_caixa = f.cpf  
@@ -107,7 +104,7 @@ class CupomDAO:
                 header_cols = [desc[0] for desc in cur.description]
                 cupom_details = dict(zip(header_cols, header_row))
 
-                # 2. CONSULTA SECUNDÁRIA: Itens da Venda (sem alterações)
+                # CONSULTA SECUNDÁRIA: Itens da Venda
                 sql_itens = """
                     SELECT
                         ic.quantidade, ic.preco_unitario,

@@ -10,9 +10,6 @@ estoque_bp = Blueprint('estoque', __name__)
 estoque_dao = EstoqueDAO()
 estoque_schema = EstoqueSchema()
 
-# =======================================================
-# 1. READ ONE (GET /api/v1/estoque/{id})
-# =======================================================
 
 @estoque_bp.route('/<int:codigo_produto>', methods=['GET'])
 def get_estoque_by_product_id(codigo_produto):
@@ -27,18 +24,14 @@ def get_estoque_by_product_id(codigo_produto):
     result = estoque_schema.dump(estoque_data)
     return jsonify(result), http.HTTPStatus.OK
 
-# =======================================================
-# 2. UPDATE (PUT /api/v1/estoque/{id}) - Ajuste de Quantidade
-# =======================================================
 
 @estoque_bp.route('/<int:codigo_produto>', methods=['PUT'])
 def update_estoque_quantity(codigo_produto):
     """ Rota para ajustar a quantidade de um produto no estoque. """
     data = request.get_json()
     
-    # 1. VALIDAÇÃO
+    # VALIDAÇÃO
     try:
-        # A validação precisa do codigo_produto e da quantidade
         data['codigo_produto'] = codigo_produto # Injeta o ID da URL para validação
         valid_data = estoque_schema.load(data)
     except ValidationError as err:
@@ -46,10 +39,10 @@ def update_estoque_quantity(codigo_produto):
     
     nova_quantidade = valid_data['quantidade']
     
-    # 2. CHAMADA AO DAO
+    # CHAMADA AO DAO
     rows_affected = estoque_dao.update_quantity(codigo_produto, nova_quantidade)
     
-    # 3. RESPOSTA
+    # RESPOSTA
     if rows_affected == 1:
         return jsonify({"message": f"Estoque do produto {codigo_produto} atualizado para {nova_quantidade}."}), http.HTTPStatus.OK
     elif rows_affected == 0:

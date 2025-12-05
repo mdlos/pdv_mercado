@@ -18,7 +18,6 @@ class DevolucaoDAO:
         conn = None
         id_devolucao = None
         
-        # EXTRAÇÃO CRÍTICA: Valor total, CPF Cliente, e CPF Funcionário (Vindo do Schema)
         valor_total_devolucao = dados_devolucao['valor_total_devolucao']
         cpf_cliente = dados_devolucao['cpf_cliente']
         cpf_funcionario = dados_devolucao['cpf_funcionario'] 
@@ -29,7 +28,7 @@ class DevolucaoDAO:
 
             with conn.cursor() as cur:
                 
-                # --- 1. INSERT na Tabela DEVOLUÇÃO ---
+                # INSERT na Tabela DEVOLUÇÃO
                 devolucao_sql = """
                     INSERT INTO devolucao (id_venda, motivo, cpf_funcionario) 
                     VALUES (%s, %s, %s)
@@ -43,13 +42,13 @@ class DevolucaoDAO:
                 id_devolucao = cur.fetchone()[0]
                 
                 
-                # --- 2. LOOP para Itens e RESTAURAÇÃO DE ESTOQUE ---
+                # RESTAURAÇÃO DE ESTOQUE
                 
                 for item in dados_devolucao['itens']:
                     codigo_produto = item['codigo_produto']
                     quantidade_devolvida = item['quantidade_devolvida']
                     
-                    # a. RESTAURAÇÃO DE ESTOQUE (UPDATE: Aumenta a quantidade)
+                    # Aumenta a quantidade
                     estoque_update_sql = """
                         UPDATE estoque 
                         SET quantidade = quantidade + %s 
@@ -57,7 +56,7 @@ class DevolucaoDAO:
                     """
                     cur.execute(estoque_update_sql, (quantidade_devolvida, codigo_produto))
                     
-                    # b. INSERT na DEVOLUÇÃO_ITEM
+                    # INSERT na DEVOLUÇÃO_ITEM
                     item_sql = """
                         INSERT INTO devolucao_item (id_devolucao, codigo_produto, quantidade_devolvida, valor_unitario)
                         VALUES (%s, %s, %s, %s);
@@ -70,8 +69,7 @@ class DevolucaoDAO:
                     ))
 
 
-                # --- 3. INSERT na Tabela DEVOLUÇÃO_CRÉDITO (Adicionar Valor e Cliente) ---
-                
+                # Adiciona Valor e Cliente em DEVOLUÇÃO_CRÉDITO
                 codigo_vale = f"CREDITO-{id_devolucao}-{date.today().year}"
                 data_validade = date.today() + timedelta(days=365)
                 
@@ -88,7 +86,6 @@ class DevolucaoDAO:
                 ))
 
 
-                # --- 4. COMMIT FINAL (Transação atômica) ---
                 conn.commit()
                 return id_devolucao
                 
@@ -134,7 +131,7 @@ class DevolucaoDAO:
             
             with conn.cursor() as cur:
                 
-                # 1. BUSCA O CABEÇALHO DA DEVOLUÇÃO E OS DADOS DO VALE/CLIENTE
+                # BUSCA O CABEÇALHO DA DEVOLUÇÃO E OS DADOS DO VALE/CLIENTE
                 sql_devolucao = """
                     SELECT
                         d.id_devolucao, d.id_venda, d.motivo, 
@@ -158,7 +155,7 @@ class DevolucaoDAO:
                 header_cols = [desc[0] for desc in cur.description]
                 devolucao_data = dict(zip(header_cols, devolucao_record))
 
-                # 2. BUSCA OS ITENS DEVOLVIDOS
+                # BUSCA OS ITENS DEVOLVIDOS
                 sql_itens = """
                     SELECT
                         di.codigo_produto, di.quantidade_devolvida, di.valor_unitario,

@@ -126,10 +126,8 @@ def update_produto(codigo_produto):
 def delete_produto(codigo_produto):
     """ Rota para deletar um produto (DELETE). """
     
-    # 1. CHAMADA AO DAO (SQL PURO)
     rows_affected = produto_dao.delete(codigo_produto)
     
-    # 2. RESPOSTA
     if rows_affected == 1:
         return '', http.HTTPStatus.NO_CONTENT 
     elif rows_affected == 0:

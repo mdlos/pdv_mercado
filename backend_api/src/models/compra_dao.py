@@ -25,10 +25,10 @@ class CompraDAO:
 
             with conn.cursor() as cur:
                 
-                # 1. INSERT na Tabela COMPRA 
+                # INSERT na Tabela COMPRA 
                 sql_compra = "INSERT INTO compra (id_fornecedor, data_compra, valor_total_compra) VALUES (%s, %s, %s) RETURNING id_compra;"
                 
-                # Cálculo valor_total (usando custo_unitario, pois o schema deve validar essa chave)
+                # Cálculo valor_total usando custo_unitario
                 valor_total = sum(
                     Decimal(str(item['quantidade_comprada'])) * Decimal(str(item['custo_unitario'])) 
                     for item in dados_compra['itens']
@@ -44,26 +44,24 @@ class CompraDAO:
                 id_compra = cur.fetchone()[0]
                 
                 
-                # --- 2. LOOP para Itens e AUMENTO DE ESTOQUE ---
+                # LOOP para Itens e AUMENTO DE ESTOQUE
                 
                 for item in dados_compra['itens']:
                     codigo_produto = item['codigo_produto']
                     quantidade_comprada = item['quantidade_comprada']
                     custo_unitario = item['custo_unitario']
                     
-                    # A. INSERT na COMPRA_ITEM
-                    # 🛑 NOTA: Assumindo que a coluna na compra_item se chama 'custo_unitario', não 'preco_unitario'
+                    # INSERT na COMPRA_ITEM
                     sql_item = "INSERT INTO compra_item (id_compra, codigo_produto, quantidade_comprada, custo_unitario) VALUES (%s, %s, %s, %s);"
                     params_item = (id_compra, codigo_produto, quantidade_comprada, custo_unitario)
                     cur.execute(sql_item, params_item)
                     
-                    # B. SQL para atualizar o estoque (AUMENTO)
+                    # Atualiza o estoque
                     sql_estoque_update = "UPDATE estoque SET quantidade = quantidade + %s WHERE codigo_produto = %s;"
                     params_estoque_update = (quantidade_comprada, codigo_produto)
                     cur.execute(sql_estoque_update, params_estoque_update)
 
 
-            # 3. COMMIT FINAL
             conn.commit() 
             return id_compra
         except Exception as e:
@@ -73,13 +71,10 @@ class CompraDAO:
                 raise e 
         
         finally:
-            # 🛑 CORREÇÃO 1: Remover manipulação de autocommit no finally
             if conn:
                 conn.close()
 
-    # -----------------------------------------------------------------
-    # R - READ (Buscar Compras por Data/Período) - CORRIGIDO
-    # -----------------------------------------------------------------
+
     def find_by_date(self, data_inicio: Optional[str] = None, data_fim: Optional[str] = None) -> list[dict]:
         conn = get_db_connection()
         if conn is None: return []
@@ -116,7 +111,6 @@ class CompraDAO:
                 return [dict(zip(columns, row)) for row in rows]
         except Exception as e:
             logger.error(f"Erro ao buscar compras por data: {e}")
-            # 🛑 CORREÇÃO 3: Propagar o erro para o Controller, que lida com o 500.
             raise 
         finally:
             if conn:

@@ -12,7 +12,6 @@ class CompraItemSchema(Schema):
     codigo_produto = fields.Int(required=True, validate=validate.Range(min=1))
     quantidade_comprada = fields.Int(required=True, validate=validate.Range(min=1))
     
-    # 🛑 Usamos o nome da coluna no DB
     custo_unitario = fields.Decimal(required=True, as_string=True, validate=validate.Range(min=Decimal('0.01')))
     
     subtotal = fields.Decimal(dump_only=True, as_string=True)
@@ -25,7 +24,6 @@ class CompraItemSchema(Schema):
 
 
 # --- Schema Principal da Compra ---
-
 class CompraSchema(Schema):
     """ Validação e agregação de uma compra completa. """
     
@@ -37,16 +35,12 @@ class CompraSchema(Schema):
     id_compra = fields.Int(dump_only=True) 
     data_compra = fields.Date(required=False, load_default=date.today().isoformat()) 
     
-    # 🛑 CORREÇÃO CRÍTICA AQUI: O valor total é CALCULADO, logo é DUMP_ONLY.
     valor_total_compra = fields.Decimal(dump_only=True, as_string=True)
     
     # Lista Aninhada
     itens = fields.List(fields.Nested(CompraItemSchema), required=True, validate=validate.Length(min=1))
     
-    # -------------------------------------------------------------
     # Validação de Negócio
-    # -------------------------------------------------------------
-
     @post_load
     def clean_and_validate_compra(self, data, **kwargs):
         """ 
@@ -58,7 +52,6 @@ class CompraSchema(Schema):
         for item in data['itens']:
             valor_calculado += item['subtotal']
         
-        # 🛑 NOVO FLUXO: Atribui o valor calculado à variável que será usada no DAO
         data['valor_total_compra'] = valor_calculado 
         
         return data

@@ -12,12 +12,10 @@ export interface IFuncionario {
     senha?: string; // Usado apenas no create/update
     id_tipo_funcionario: number; // Obrigatório
     localizacao?: ILocalizacao;
-    tipo_cargo?: string; // Retornado pelo backend
+    tipo_cargo?: string;
 }
 
-export interface IDetalheFuncionario extends IFuncionario {
-    // CPF já está na interface base
-}
+export interface IDetalheFuncionario extends IFuncionario { }
 
 export type TFuncionarioComTotalCount = {
     data: IDetalheFuncionario[];

@@ -12,10 +12,10 @@ def format_telefone(value):
     """ Formata um número de telefone com 10 ou 11 dígitos para (DD) 9XXXX-XXXX. """
     if not value: return value
     
-    # 1. Limpa: Deixa apenas números
+    # Limpa: Deixa apenas números
     numeros = clean_only_numbers(value)
     
-    # 2. Verifica o tamanho (10 ou 11 dígitos)
+    # Verifica o tamanho (10 ou 11 dígitos)
     tamanho = len(numeros)
     
     if tamanho == 11: # Celular com 9º dígito (XX) 9XXXX-XXXX

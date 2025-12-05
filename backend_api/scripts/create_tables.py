@@ -1,7 +1,7 @@
 
 import sys
 import os
-sys.path.append(os.getcwd())
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.db_connection import get_db_connection
 
 def create_tables():

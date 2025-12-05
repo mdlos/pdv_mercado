@@ -29,20 +29,9 @@ class ClienteSchema(Schema):
     email = fields.Email(required=False, allow_none=True)
     sexo = fields.Str(required=False, validate=validate.OneOf(["M", "F", "O"]), allow_none=True)
     
-    # --------------------------------------------------------------------------------------
-    # LOCALIZACAO: Usamos fields.Method para forçar a estrutura aninhada na saída (GET),
-    #              e fields.Nested para validar a entrada (POST/PUT).
-    # --------------------------------------------------------------------------------------
-    
-    # 1. ENTRADA (POST/PUT): Usa o LocalizacaoSchema para validar o objeto aninhado
+    # LOCALIZACAO
     localizacao = fields.Nested(LocalizacaoSchema, required=True, load_only=True) 
-
-    # 2. SAÍDA (GET): Usa um método para montar o objeto aninhado a partir dos campos planos do DAO
     localizacao_saida = fields.Method("get_localizacao_object", dump_only=True)
-    
-    # --------------------------------------------------------------------------------------
-    # MÉTODOS DE PROCESSAMENTO (Marshmallow)
-    # --------------------------------------------------------------------------------------
     
     # Retorna o tipo de documento no JSON de saída
     tipo_doc = fields.Method("get_document_type", dump_only=True)
@@ -70,7 +59,6 @@ class ClienteSchema(Schema):
         return data
     
     # --- Métodos Auxiliares ---
-
     def get_document_type(self, obj):
         """ Retorna 'cpf' ou 'cnpj' com base no número de dígitos. """
         return get_doc_type(obj.get('cpf_cnpj'))
@@ -78,7 +66,6 @@ class ClienteSchema(Schema):
     def get_localizacao_object(self, obj):
         """ Monta o objeto aninhado 'localizacao' a partir do dicionário plano do DAO. """
         
-        # Note que a formatação de CEP acontece no @post_dump, então pegamos o valor já formatado
         cep_formatado = obj.get('cep')
         
         return {
@@ -90,13 +77,13 @@ class ClienteSchema(Schema):
             "cidade": obj.get('cidade'),
             "uf": obj.get('uf'),
         }
-        @validates("cpf_cnpj")
-        def validate_document_type(self, value): # Apenas 'self' e 'value' são necessários
-            """ Verifica se o documento é um CPF (11) ou CNPJ (14) válido. """
+    
+    @validates("cpf_cnpj")
+    def validate_document_type(self, value): 
+        """ Verifica se o documento é um CPF (11) ou CNPJ (14) válido. """
+        
+        from src.utils.formatters import clean_only_numbers
             
-            # Certifique-se de que a função clean_only_numbers está disponível (importada de formatters.py)
-            from src.utils.formatters import clean_only_numbers
-            
-            cleaned_value = clean_only_numbers(value)
-            if len(cleaned_value) not in [11, 14]:
-                raise ValidationError("O CPF/CNPJ deve conter 11 (CPF) ou 14 (CNPJ) dígitos.")
+        cleaned_value = clean_only_numbers(value)
+        if len(cleaned_value) not in [11, 14]:
+            raise ValidationError("O CPF/CNPJ deve conter 11 (CPF) ou 14 (CNPJ) dígitos.")

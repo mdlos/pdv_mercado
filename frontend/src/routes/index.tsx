@@ -11,7 +11,7 @@ import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 // import StorefrontIcon from '@mui/icons-material/Storefront';
 
-import Home from '../pages/Home';
+import Home from "../pages/Home"
 import Login from "../pages/Login";
 import FrenteDeCaixa from "../pages/FrenteDeCaixa";
 import Clientes from "../pages/Clientes";

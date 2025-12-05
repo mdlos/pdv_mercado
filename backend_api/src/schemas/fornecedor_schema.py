@@ -21,10 +21,7 @@ class FornecedorSchema(Schema):
     localizacao_detalhes = fields.Method("get_localizacao_object", dump_only=True)
 
 
-    # -------------------------------------------------------------
-    # MÉTODOS DE PROCESSAMENTO E VALIDAÇÃO
-    # -------------------------------------------------------------
-    
+    # MÉTODOS DE PROCESSAMENTO E VALIDAÇÃO    
     @post_load
     def clean_data_on_load(self, data, **kwargs):
         """ Limpa CNPJ e Celular para salvar APENAS números no DB. """
@@ -57,16 +54,12 @@ class FornecedorSchema(Schema):
         if len(clean_only_numbers(value)) != 14:
             raise ValidationError("O CNPJ deve conter exatamente 14 dígitos.")
     
-    # --- MÉTODOS AUXILIARES PARA SERIALIZAÇÃO ---
-    
     def get_localizacao_object(self, obj):
         """ Monta o objeto aninhado 'localizacao' a partir do JOIN do DAO. """
         # Verifica se os campos de localização existem
         if obj.get('id_localizacao'):
             return {
                 "id_localizacao": obj['id_localizacao'],
-                # Nota: Não formatamos o CEP aqui, pois o format_cpf_cnpj do utils lida com 11 ou 14 dígitos,
-                # e o CEP (8 dígitos) não tem uma formatação padrao (ex: 00000-000) no format_cpf_cnpj.
                 "cep": obj.get('cep'), 
                 "logradouro": obj.get('logradouro'),
                 "numero": obj.get('numero'),

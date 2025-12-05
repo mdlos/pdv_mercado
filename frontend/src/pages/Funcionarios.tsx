@@ -9,7 +9,7 @@ import { Button, Fab, TextField, Box, LinearProgress } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import { FuncionarioService, type IDetalheFuncionario } from '../shared/services/services/api';
 
-// Fixed Funcionarios Component
+// Componente de Funcionários
 const Funcionarios = () => {
     const [open, setOpen] = useState(false);
     const [openConfirm, setOpenConfirm] = useState(false);
@@ -30,7 +30,7 @@ const Funcionarios = () => {
         sobrenome: '',
         nomeSocial: '',
         telefone: '',
-        cep: '', // NOVO CAMPO
+        cep: '',
         logradouro: '',
         numero: '',
         cidade: '',
@@ -48,7 +48,7 @@ const Funcionarios = () => {
             id: 'nome',
             label: 'Nome Completo',
             minWidth: 150,
-            render: (value, row) => `${row.nome} ${row.sobrenome}`
+            render: (row) => `${row.nome} ${row.sobrenome}`
         },
         { id: 'sexo', label: 'Sexo', minWidth: 100 },
         { id: 'nome_social', label: 'Nome Social', minWidth: 100 },

@@ -9,10 +9,10 @@ export interface IItemVenda {
 }
 
 export interface IPagamentoVenda {
-    id_tipo: number; // 1: Dinheiro, 2: Cartão, etc. (Precisa mapear no frontend)
+    id_tipo: number;
     valor_pago: number;
     troco?: number;
-    descricao?: string; // Retornado pelo backend
+    descricao?: string;
 }
 
 export interface IVenda {
@@ -24,7 +24,7 @@ export interface IVenda {
     troco?: number;
     data_venda?: string;
     itens: IItemVenda[];
-    pagamentos: IPagamentoVenda[]; // Backend espera lista, mas o DAO processa o primeiro item por enquanto
+    pagamentos: IPagamentoVenda[];
 }
 
 const create = async (dados: Omit<IVenda, 'id_venda'>): Promise<number | Error> => {
@@ -48,7 +48,7 @@ const create = async (dados: Omit<IVenda, 'id_venda'>): Promise<number | Error> 
     }
 };
 
-const getAll = async (page = 1, filterData = '', filterCpf = ''): Promise<{ data: IVenda[], totalCount: number } | Error> => {
+const getAll = async (filterData = '', filterCpf = ''): Promise<{ data: IVenda[], totalCount: number } | Error> => {
     try {
         let url = '/vendas';
         const params = new URLSearchParams();

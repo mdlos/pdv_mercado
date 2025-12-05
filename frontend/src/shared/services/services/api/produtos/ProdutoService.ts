@@ -19,9 +19,8 @@ type TProdutoComTotalCount = {
     totalCount: number;
 }
 
-const getAll = async (page = 1, filter = ''): Promise<TProdutoComTotalCount | Error> => {
+const getAll = async (filter = ''): Promise<TProdutoComTotalCount | Error> => {
     try {
-        // Backend atualmente retorna todos os produtos sem paginação
         const { data } = await Api.get('/produtos');
 
         if (data) {

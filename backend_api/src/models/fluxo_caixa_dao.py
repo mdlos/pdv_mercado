@@ -4,9 +4,6 @@ from src.db_connection import get_db_connection
 import logging
 from datetime import datetime
 from decimal import Decimal
-# 🛑 CORREÇÃO DE IMPORTAÇÃO: Remover a Nota e deixar os imports necessários
-# from psycopg import rows 
-# import psycopg 
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +37,7 @@ class FluxoCaixaDAO:
         finally:
             if conn: conn.close()
 
-    def fechar_caixa(self, id_fluxo: int, saldo_contado: Decimal): # 🛑 Renomeado para saldo_contado
+    def fechar_caixa(self, id_fluxo: int, saldo_contado: Decimal):
         """ 
         Registra o fechamento de um turno existente. 
         Atualiza o status e o saldo contado, e define a data/hora de fechamento.
@@ -54,7 +51,7 @@ class FluxoCaixaDAO:
                 sql = f"""
                     UPDATE {self.table_name}
                     SET status = 'FECHADO', 
-                        saldo_contado = %s, -- 🛑 Usando saldo_contado (coluna corrigida)
+                        saldo_contado = %s, 
                         data_hora_fechamento = CURRENT_TIMESTAMP
                     WHERE id_fluxo = %s AND status = 'ABERTO';
                 """
@@ -79,7 +76,7 @@ class FluxoCaixaDAO:
                 sql = sql = """
                     SELECT 
                         fc.*, 
-                        f.nome AS nome_operador -- 🛑 Adicionar o nome
+                        f.nome AS nome_operador
                     FROM fluxo_caixa fc
                     LEFT JOIN funcionario f ON fc.cpf_funcionario_abertura = f.cpf
                     WHERE fc.id_fluxo = %s;
@@ -124,7 +121,7 @@ class FluxoCaixaDAO:
         
         try:
             with conn.cursor() as cur:
-                # Query com JOIN para buscar o nome do funcionário
+                # Busca todos os registros de caixa que estão FECHADO, com o nome do funcionário
                 sql = """
                     SELECT fc.*, f.nome AS nome_funcionario
                     FROM fluxo_caixa fc
@@ -154,7 +151,6 @@ class FluxoCaixaDAO:
         try:
             with conn.cursor() as cur: 
 
-                # 🛑 CORREÇÃO 1: Adicionar o CAST ::numeric para forçar a soma
                 sql_resumo = """
                     SELECT
                         tp.id_tipo,
@@ -173,7 +169,6 @@ class FluxoCaixaDAO:
                 cols = [desc[0] for desc in cur.description]
                 resumo_pagamentos = [dict(zip(cols, r)) for r in resumo_pagamentos_raw]
 
-                # 🛑 CORREÇÃO 2: Adicionar o CAST ::numeric para forçar a soma de cancelados
                 sql_cancelado = """
                     SELECT
                         COALESCE(SUM(v.valor_total::numeric), 0) AS total_cancelado
@@ -183,7 +178,7 @@ class FluxoCaixaDAO:
                 """
                 cur.execute(sql_cancelado, (id_fluxo,))
                 
-                # Tratar o retorno do single value (fetch all para evitar problemas com fetchone)
+                # Tratar o retorno do single value 
                 total_cancelado_raw = cur.fetchone()
                 total_cancelado = total_cancelado_raw[0] if total_cancelado_raw else Decimal('0.00')
                 
@@ -193,7 +188,6 @@ class FluxoCaixaDAO:
                 }
 
         except Exception as e:
-            # Captura exceções e loga
             logger.error(f"Erro ao buscar resumo de pagamentos para fluxo {id_fluxo}: {e}")
             return {'resumo_pagamentos': [], 'total_cancelado': Decimal('0.00')}
         finally:

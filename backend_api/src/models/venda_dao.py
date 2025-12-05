@@ -18,7 +18,6 @@ class VendaDAO:
 
 
     def registrar_venda(self, dados_venda: dict):
-        # ... (O código registrar_venda permanece OK, pois a limpeza do CPF_FUNCIONARIO é feita no Schema)
         
         conn = get_db_connection() 
         if conn is None:
@@ -31,7 +30,6 @@ class VendaDAO:
         try:
             with conn.cursor() as cur:
                 
-                # --- 1. PREPARO (Cliente) ---
                 cpf_cliente = dados_venda.get('cpf_cliente') 
                 id_cliente = None
                 cpf_cliente_limpo = None 
@@ -45,10 +43,8 @@ class VendaDAO:
                     if id_cliente is None:
                         raise ValueError(f"O Cliente com CPF/CNPJ '{cpf_cliente}' não foi encontrado no sistema.")
                 
-                # --- 2. PREPARO (Pagamentos) ---
                 pagamento = dados_venda['pagamentos'][0]
                 
-                # --- 3. INSERT na Tabela VENDA (Cabeçalho Completo) ---
                 venda_sql = """
                     INSERT INTO venda (
                         valor_total, 
@@ -77,13 +73,13 @@ class VendaDAO:
                 id_venda = cur.fetchone()[0]
                 
                 
-                # --- 4. INSERT na Tabela VENDA_ITEM e UPDATE no ESTOQUE ---
+                # INSERT na Tabela VENDA_ITEM e UPDATE no ESTOQUE
                 
                 for item in dados_venda['itens']:
                     codigo_produto = item['codigo_produto']
                     quantidade_vendida = item['quantidade_venda']
                     
-                    # a. BAIXA NO ESTOQUE (UPDATE)
+                    # BAIXA NO ESTOQUE (UPDATE)
                     estoque_update_sql = """
                         UPDATE estoque
                         SET quantidade = quantidade - %s
@@ -100,7 +96,7 @@ class VendaDAO:
                     if new_quantity_result is None or new_quantity_result[0] < 0:
                         raise Exception(f"Estoque insuficiente para o produto {codigo_produto}. ROLLBACK!")
                         
-                    # b. INSERT na VENDA_ITEM
+                    # INSERT na VENDA_ITEM
                     item_sql = """
                         INSERT INTO venda_item (id_venda, codigo_produto, preco_unitario, quantidade_venda, valor_total)
                         VALUES (%s, %s, %s, %s, %s);
@@ -114,7 +110,7 @@ class VendaDAO:
                     ))
 
 
-                # --- 5. REGISTRO NO FLUXO DE CAIXA (LEDGER) ---
+                # REGISTRO NO FLUXO DE CAIXA (LEDGER)
                 
                 id_fluxo_aberto = self.fluxo_caixa_dao.buscar_caixa_aberto(dados_venda['cpf_funcionario'])
 
@@ -128,7 +124,6 @@ class VendaDAO:
                 cur.execute(fluxo_movimento_sql, (id_fluxo_aberto, id_venda, valor_total))
 
 
-                # --- 6. COMMIT FINAL ---
                 conn.commit()
                 return id_venda
                 
@@ -149,14 +144,12 @@ class VendaDAO:
                 conn.close()
 
     def buscar_por_id(self, id_venda: int):
-        # ... (código buscar_por_id inalterado) ...
         conn = get_db_connection() 
         if conn is None: return None
         
         venda_data = {}
 
         try:
-            # Usando rows.dict_row para o DictCursor no psycopg v3
             with conn.cursor(row_factory=rows.dict_row) as cur: 
 
                 sql_venda = """
@@ -184,7 +177,7 @@ class VendaDAO:
                 
                 venda_data = dict(venda_record) 
 
-                # 2. Busca os ITENS da Venda
+                # Busca os ITENS da Venda
                 sql_itens = """
                     SELECT 
                         vi.codigo_produto,
@@ -201,7 +194,6 @@ class VendaDAO:
                 
                 venda_data['itens'] = [dict(r) for r in item_records] 
 
-                # 3. Adaptação do Pagamento para o Schema (usando os dados já recuperados)
                 venda_data['pagamentos'] = [{
                     'id_tipo': venda_data['id_tipo_pagamento'],
                     'valor_pago': venda_data['valor_pago'],
@@ -218,9 +210,7 @@ class VendaDAO:
         finally:
             if conn: conn.close()
 
-    # -------------------------------------------------------------
-    # BUSCAR VENDAS FLEXÍVEL (MÉTODO PARA LISTAGEM)
-    # -------------------------------------------------------------
+    # BUSCAR VENDAS FLEXÍVEL 
     def buscar_vendas_flexivel(self, data_str=None, cpf_cliente=None):
         conn = get_db_connection()
         if conn is None: return []
@@ -228,7 +218,6 @@ class VendaDAO:
         vendas_list = []
         
         try:
-            # Usando rows.dict_row para o DictCursor no psycopg v3
             with conn.cursor(row_factory=rows.dict_row) as cur:
                 
                 sql = """
@@ -250,7 +239,6 @@ class VendaDAO:
                     
                 # Filtro 2: CPF do Cliente
                 if cpf_cliente:
-                    # 🛑 CORREÇÃO: Filtrar pelo CPF do CLIENTE, não do funcionário
                     where_clauses.append("REGEXP_REPLACE(v.cpf_cnpj_cliente, '[^0-9]', '', 'g') = %s") 
                     params.append(cpf_cliente) 
                     
@@ -265,8 +253,7 @@ class VendaDAO:
                 
                 vendas_list = [dict(r) for r in rows_fetched]
 
-                # 🛑 CORREÇÃO: Buscar ITENS e formatar PAGAMENTOS para cada venda
-                # Isso é necessário porque o VendaSchema exige esses campos aninhados.
+                # Buscar ITENS e formatar PAGAMENTOS para cada venda
                 for venda in vendas_list:
                     # 1. Buscar Itens
                     sql_itens = """

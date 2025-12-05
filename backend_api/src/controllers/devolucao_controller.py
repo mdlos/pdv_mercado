@@ -22,19 +22,18 @@ def registrar_devolucao():
     """ Rota para registrar uma devolução e restaurar o estoque. """
     data = request.get_json()
     
-    # SOLUÇÃO TEMPORÁRIA: Injeta o CPF do operador logado
+    # Injeta o CPF do operador logado
     data['cpf_funcionario'] = CPF_OPERADOR_LOGADO 
     
-    # 1. VALIDAÇÃO
+    # VALIDAÇÃO
     try:
         validated_data = devolucao_schema.load(data) 
     except ValidationError as e:
         logger.error(f"Erro de validação na devolução: {e}")
         return jsonify({"message": "Erro de validação nos dados da devolução.", "errors": e.messages}), HTTPStatus.BAD_REQUEST
         
-    # 2. PROCESSO DE TRANSAÇÃO (DAO)
+    # PROCESSO DE TRANSAÇÃO
     try:
-        # Passamos o dicionário COMPLETO
         id_devolucao = devolucao_dao.registrar_devolucao(validated_data)
         
         if id_devolucao:
@@ -55,9 +54,7 @@ def registrar_devolucao():
             "status": "Error"
         }), HTTPStatus.INTERNAL_SERVER_ERROR
         
-# -----------------------------------------------------------
-# 1. R - READ (Buscar Vale Crédito ATIVO por CPF - Saldo)
-# -----------------------------------------------------------
+
 @devolucao_bp.route('/credito', methods=['GET'])
 def get_active_credit():
     """ 
@@ -78,9 +75,7 @@ def get_active_credit():
     else:
         return jsonify({"message": f"Nenhum vale crédito ativo encontrado para o CPF {cpf_cliente}."}), HTTPStatus.NOT_FOUND
 
-# -----------------------------------------------------------
-# 2. R - READ (Buscar Detalhes da Devolução/Vale Crédito por ID)
-# -----------------------------------------------------------
+
 @devolucao_bp.route('/<int:id_devolucao>', methods=['GET'])
 def get_devolucao_details_by_id(id_devolucao):
     """ Busca todos os detalhes da devolução (relatório de impressão) pelo ID. """
@@ -92,9 +87,7 @@ def get_devolucao_details_by_id(id_devolucao):
     else:
         return jsonify({"message": f"Devolução com ID {id_devolucao} não encontrada."}), HTTPStatus.NOT_FOUND
 
-# -----------------------------------------------------------
-# 3. R - READ (Buscar LISTA de Devoluções por CPF do Cliente)
-# -----------------------------------------------------------
+
 @devolucao_bp.route('/cliente', methods=['GET'])
 def get_devolucao_details_by_cpf():
     """ 
@@ -108,7 +101,7 @@ def get_devolucao_details_by_cpf():
         
     cpf_limpo = clean_only_numbers(cpf_cliente)
     
-    # 1. Busca todos os IDs de devolução do cliente
+    # Busca todos os IDs de devolução do cliente
     devolucoes_ids = devolucao_dao.find_devolucao_ids_by_cpf(cpf_limpo)
     
     if not devolucoes_ids:
@@ -116,7 +109,7 @@ def get_devolucao_details_by_cpf():
 
     devolucoes_completas = []
     
-    # 2. Para cada ID, busca o relatório completo
+    # Para cada ID, busca o relatório completo
     for dev_id in devolucoes_ids:
         devolucao_completa = devolucao_dao.buscar_devolucao_completa(dev_id['id_devolucao'])
         if devolucao_completa:

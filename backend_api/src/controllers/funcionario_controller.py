@@ -86,9 +86,7 @@ def listar_todos_funcionarios():
     else:
         return jsonify([]), HTTPStatus.OK
 
-# -----------------------------------------------------------
-# R - READ (Busca por CPF)
-# -----------------------------------------------------------
+
 @funcionario_bp.route('/<string:cpf>', methods=['GET']) 
 def get_funcionario(cpf):
     """ Rota para buscar um funcionário pelo CPF. """
@@ -102,9 +100,7 @@ def get_funcionario(cpf):
     else:
         return jsonify({"message": f"Funcionário com CPF {cpf} não encontrado."}), HTTPStatus.NOT_FOUND
 
-# -----------------------------------------------------------
-# D - DELETE (Exclusão por CPF)
-# -----------------------------------------------------------
+
 @funcionario_bp.route('/<string:cpf>', methods=['DELETE'])
 def delete_funcionario(cpf):
     """ Rota para deletar um funcionário e sua localização associada. """
@@ -117,18 +113,14 @@ def delete_funcionario(cpf):
     else:
         return jsonify({"message": f"Funcionário com CPF {cpf} não encontrado ou erro na exclusão."}), HTTPStatus.NOT_FOUND
 
-## -----------------------------------------------------------
-# U - UPDATE (Atualização de Funcionário)
-# -----------------------------------------------------------
+
 @funcionario_bp.route('/<string:cpf>', methods=['PUT'])
 def update_funcionario(cpf):
     """ Rota para atualizar dados do funcionário. """
     data = request.get_json()
     cpf_limpo = clean_only_numbers(cpf)
     
-    # 1. Validação dos dados (partial=True permite enviar apenas alguns campos)
     try:
-        # Nota: O Schema deve ser corrigido para aceitar 'senha' para LOAD
         funcionario_data = funcionario_schema.load(data, partial=True)
     except Exception as e:
         error_details = getattr(e, 'messages', str(e))
@@ -136,15 +128,13 @@ def update_funcionario(cpf):
 
     senha_hashed = None
     
-    # 2. Trata a Senha (Se for enviada, gera o HASH)
+    # Trata a Senha (Se for enviada, gera o HASH)
     if 'senha' in funcionario_data:
         senha_pura = funcionario_data.pop('senha') 
         senha_hashed = bcrypt.generate_password_hash(senha_pura).decode('utf-8')
 
-    # 3. Processa a Localização (se presente)
     localizacao_data = funcionario_data.pop('localizacao', None) 
     
-    # 4. Chamada ao DAO para o UPDATE
     rows_affected = funcionario_dao.update(
         cpf=cpf_limpo,
         senha_hashed=senha_hashed,
@@ -152,7 +142,6 @@ def update_funcionario(cpf):
         **funcionario_data
     )
     
-    # 5. Resposta
     if rows_affected == 1:
         funcionario_atualizado = funcionario_dao.find_by_cpf(cpf_limpo)
         return funcionario_schema.dump(funcionario_atualizado), HTTPStatus.OK

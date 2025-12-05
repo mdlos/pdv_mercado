@@ -4,18 +4,13 @@ from src.db_connection import get_db_connection
 import logging
 from flask_bcrypt import Bcrypt 
 from typing import Optional 
-import re # Necessário para limpar o CPF no DAO se precisar de defesa adicional
-
+import re 
 logger = logging.getLogger(__name__)
 
 class FuncionarioDAO:
     
     def __init__(self):
         self.table_name = "funcionario" 
-    
-    # -----------------------------------------------------------------
-    # C - CREATE (Inserção) - COM VALIDAÇÃO DE CARGO OBRIGATÓRIO
-    # -----------------------------------------------------------------
     
     def insert(self, cpf: str, nome: str, sobrenome: str, senha_hashed: str, id_tipo_funcionario: int, 
             email: Optional[str] = None, sexo: Optional[str] = None, telefone: Optional[str] = None, nome_social: Optional[str] = None, 
@@ -24,7 +19,7 @@ class FuncionarioDAO:
         conn = None
         id_localizacao = None
         
-        # 🛑 REGRA DE NEGÓCIO: O cargo é obrigatório para o cadastro
+        # cargo é obrigatório para o cadastro
         if id_tipo_funcionario is None:
             raise ValueError("O cargo (id_tipo_funcionario) é obrigatório para cadastrar um funcionário.")
 
@@ -32,7 +27,7 @@ class FuncionarioDAO:
             conn = get_db_connection()
             with conn.cursor() as cur:
                 
-                # 1. INSERIR LOCALIZAÇÃO (SE HOUVER)
+                # INSERIR LOCALIZAÇÃO (SE HOUVER)
                 if localizacao_data:
                     localizacao_sql = """
                         INSERT INTO localizacao (cep, logradouro, numero, bairro, cidade, uf)
@@ -47,7 +42,7 @@ class FuncionarioDAO:
                     cur.execute(localizacao_sql, loc_values)
                     id_localizacao = cur.fetchone()[0]
 
-                # 2. INSERIR FUNCIONÁRIO (Com senha hashed e FKs)
+                # INSERIR FUNCIONÁRIO (Com senha hashed e FKs)
                 funcionario_sql = f"""
                     INSERT INTO {self.table_name} 
                     (cpf, nome, sobrenome, senha, email, sexo, telefone, nome_social, id_tipo_funcionario, id_localizacao)
@@ -69,10 +64,6 @@ class FuncionarioDAO:
             return None
         finally:
             if conn: conn.close()
-
-    # -----------------------------------------------------------------
-    # R - READ (Busca por CPF) - Mantido
-    # -----------------------------------------------------------------
 
     def find_by_cpf(self, cpf: str):
         """ Busca um funcionário pelo CPF, fazendo JOIN com localizacao e tipo_funcionario. """
@@ -103,9 +94,6 @@ class FuncionarioDAO:
         finally:
             if conn: conn.close()
         
-    # -----------------------------------------------------------------
-    # R - READ ALL (Busca Todos) - Mantido
-    # -----------------------------------------------------------------
     def find_all(self):
         """ 
         Busca e retorna todos os funcionários com seus dados relacionados (Cargo e Endereço). 
@@ -137,9 +125,6 @@ class FuncionarioDAO:
         finally:
             if conn: conn.close()
             
-    # -----------------------------------------------------------------
-    # R - READ (Busca por Email) - Mantido
-    # -----------------------------------------------------------------
     def find_by_email(self, email: str):
         """ 
         Busca um funcionário pelo email (usado para login). 
@@ -170,26 +155,22 @@ class FuncionarioDAO:
         finally:
             if conn: conn.close()
             
-    # -----------------------------------------------------------------
-    # D - DELETE (Exclusão) - Mantido
-    # -----------------------------------------------------------------
-
     def delete(self, cpf: str):
         """ Deleta o funcionário e sua localização, se existir. """
         conn = None
         try:
             conn = get_db_connection()
             with conn.cursor() as cur:
-                # 1. Obter o id_localizacao antes de deletar o funcionário
+                # Obter o id_localizacao antes de deletar o funcionário
                 cur.execute("SELECT id_localizacao FROM funcionario WHERE cpf = %s;", (cpf,))
                 result = cur.fetchone()
                 id_localizacao = result[0] if result else None
 
-                # 2. DELETE o funcionário
+                # DELETE o funcionário
                 cur.execute("DELETE FROM funcionario WHERE cpf = %s;", (cpf,))
                 rows_affected = cur.rowcount
                 
-                # 3. DELETE a localização (se existia)
+                # DELETE a localização (se existia)
                 if id_localizacao:
                     cur.execute("DELETE FROM localizacao WHERE id_localizacao = %s;", (id_localizacao,))
                 
@@ -202,9 +183,6 @@ class FuncionarioDAO:
         finally:
             if conn: conn.close()
             
-    # -----------------------------------------------------------------
-    # U - UPDATE (Atualização) - Mantido
-    # -----------------------------------------------------------------
     def update(self, cpf: str, senha_hashed: str = None, nome: str = None, sobrenome: str = None, 
             email: str = None, sexo: str = None, telefone: str = None, nome_social: str = None, 
             id_tipo_funcionario: int = None, localizacao_data: dict = None):
@@ -216,15 +194,15 @@ class FuncionarioDAO:
             conn = get_db_connection()
             with conn.cursor() as cur:
                 
-                # 1. Obter o id_localizacao (Necessário para a transação)
+                # Obter o id_localizacao (Necessário para a transação)
                 cur.execute("SELECT id_localizacao FROM funcionario WHERE cpf = %s;", (cpf,))
                 result = cur.fetchone()
                 if not result:
-                    return 0 # Funcionário não encontrado
+                    return 0 
                 id_localizacao = result[0]
                 
                 
-                # 2. UPDATE na tabela FUNCIONARIO
+                # UPDATE na tabela FUNCIONARIO
                 fields_funcionario = []
                 values_funcionario = []
 
@@ -249,7 +227,7 @@ class FuncionarioDAO:
                     rows_affected_total += cur.rowcount
 
                 
-                # 3. UPDATE na tabela LOCALIZACAO (se houver dados para ela)
+                # UPDATE na tabela LOCALIZACAO (se houver dados para ela)
                 if localizacao_data and id_localizacao:
                     fields_localizacao = []
                     values_localizacao = []
@@ -266,8 +244,8 @@ class FuncionarioDAO:
                         sql_localizacao = f"UPDATE localizacao SET {', '.join(fields_localizacao)} WHERE id_localizacao = %s;"
                         cur.execute(sql_localizacao, tuple(values_localizacao))
                         rows_affected_total += cur.rowcount
-                        
-                # 4. COMMIT
+
+
                 if rows_affected_total > 0:
                     conn.commit()
                     return 1 

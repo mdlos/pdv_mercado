@@ -26,7 +26,6 @@ class FluxoCaixaService:
         if not dados_caixa:
             return None
 
-        # 🛑 1. CORRIGIDO: O campo é 'saldo_inicial' no DB (do tipo numeric)
         saldo_inicial = dados_caixa.get('saldo_inicial', Decimal('0.00')) 
         
         resumo_financeiro = self.fluxo_dao.buscar_resumo_pagamentos_por_fluxo(id_fluxo)
@@ -34,7 +33,7 @@ class FluxoCaixaService:
         resumo_pagamentos = resumo_financeiro['resumo_pagamentos']
         total_cancelado = resumo_financeiro['total_cancelado']
 
-        # 3. Cálculo do Total Arrecadado
+        # Cálculo do Total Arrecadado
         total_arrecadado_aprovado = Decimal('0.00')
         total_dinheiro_arrecadado = Decimal('0.00')
         
@@ -44,11 +43,11 @@ class FluxoCaixaService:
             if item['id_tipo'] == 1: 
                 total_dinheiro_arrecadado = valor
         
-        # 4. Cálculo do Saldo Teórico e Movimentação Líquida
+        # Cálculo do Saldo Teórico e Movimentação Líquida
         movimento_liquido = total_arrecadado_aprovado - total_cancelado
         saldo_teorico = saldo_inicial + movimento_liquido
 
-        # 5. Compilação do Relatório Final
+        # Compilação do Relatório Final
         relatorio = {
             "id_fluxo": id_fluxo,
             "nome_operador": dados_caixa.get('nome_operador', 'Operador Não Encontrado'), 
@@ -56,10 +55,8 @@ class FluxoCaixaService:
             "data_fechamento": dados_caixa.get('data_hora_fechamento'), 
             "saldo_inicial": saldo_inicial, 
             
-            # 🛑 CORREÇÃO 2: REINTRODUZ A CHAVE OBRIGATÓRIA PARA O CONTROLLER
             "saldo_teorico": movimento_liquido, 
             
-            # 🛑 NOVO RÓTULO: Valor_total (que é o Movimento Líquido)
             "valor_total_movimentacao": movimento_liquido + total_cancelado, 
             "total_vendas_canceladas": total_cancelado,
             "resumo_analitico": resumo_pagamentos

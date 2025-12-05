@@ -8,9 +8,7 @@ class ClienteDAO:
     Implementa o CRUD completo usando SQL puro (psycopg v3).
     """
     
-    # ------------------------------------------------
-    # READ ALL
-    # ------------------------------------------------
+
     def find_all(self):
         """ Executa SELECT de todos os clientes. """
         conn = get_db_connection()
@@ -18,7 +16,7 @@ class ClienteDAO:
         
         try:
             with conn.cursor() as cur:
-                # O JOIN para listar os dados de localização junto
+                # Lista os dados de localização junto
                 sql = """
                     SELECT c.id_cliente, c.nome, c.cpf_cnpj, c.email, c.telefone, c.sexo, 
                         l.cep, l.logradouro, l.numero, l.bairro, l.cidade, l.uf
@@ -40,9 +38,6 @@ class ClienteDAO:
         finally:
             if conn: conn.close() 
 
-    # ------------------------------------------------
-    # CREATE (CORRIGIDO)
-    # ------------------------------------------------
     def insert(self, cpf_cnpj, nome, email, telefone, sexo, localizacao_data):
         """ Insere a localização e, em seguida, o cliente na mesma transação. """
         conn = get_db_connection()
@@ -50,9 +45,7 @@ class ClienteDAO:
 
         try:
             with conn.cursor() as cur:
-                # ------------------------------------------------
-                # 1. INSERIR LOCALIZAÇÃO
-                # ------------------------------------------------
+                # Insere a localização
                 localizacao_sql = """
                     INSERT INTO localizacao 
                     (cep, logradouro, numero, bairro, cidade, uf)
@@ -70,16 +63,13 @@ class ClienteDAO:
                 cur.execute(localizacao_sql, loc_values)
                 id_localizacao = cur.fetchone()[0]
 
-                # ------------------------------------------------
-                # 2. INSERIR CLIENTE (Com todos os campos)
-                # ------------------------------------------------
+                # Insere o cliente
                 cliente_sql = """
                     INSERT INTO cliente 
                     (cpf_cnpj, nome, email, telefone, sexo, id_localizacao) 
                     VALUES (%s, %s, %s, %s, %s, %s) 
                     RETURNING id_cliente;
                 """
-                # Ordem dos valores: (cpf_cnpj, nome, email, telefone, sexo, id_localizacao)
                 cur.execute(cliente_sql, (cpf_cnpj, nome, email, telefone, sexo, id_localizacao))
                 
                 new_id = cur.fetchone()[0]
@@ -95,9 +85,6 @@ class ClienteDAO:
         finally:
             if conn: conn.close()
 
-    # ------------------------------------------------
-    # READ ONE (find_by_id)
-    # ------------------------------------------------
     def find_by_id(self, cliente_id):
         """ Busca um único cliente pelo id_cliente, incluindo dados de localização. """
         conn = get_db_connection()
@@ -105,7 +92,7 @@ class ClienteDAO:
         
         try:
             with conn.cursor() as cur:
-                # SQL: JOIN para retornar todos os dados
+                # Retorna todos os dados
                 sql = """
                     SELECT c.id_cliente, c.nome, c.cpf_cnpj, c.email, c.telefone, c.sexo, 
                         l.cep, l.logradouro, l.numero, l.bairro, l.cidade, l.uf, l.id_localizacao
@@ -129,9 +116,6 @@ class ClienteDAO:
         finally:
             if conn: conn.close()
 
-    # ------------------------------------------------
-    # NOVO: READ ONE (find_by_cpf_cnpj) <--- MÉTODO FALTANTE ADICIONADO
-    # ------------------------------------------------
     def find_by_cpf_cnpj(self, cpf_cnpj: str): 
         """ Busca um cliente pela chave de negócio (CPF ou CNPJ). """
         conn = get_db_connection()
@@ -139,7 +123,7 @@ class ClienteDAO:
 
         try:
             with conn.cursor() as cur:
-                # SQL: Busca na tabela cliente pela coluna cpf_cnpj
+                # Busca na tabela cliente pela coluna cpf_cnpj
                 sql = """
                     SELECT c.*, l.cep, l.logradouro, l.numero, l.bairro, l.cidade, l.uf, l.id_localizacao
                     FROM cliente c
@@ -160,9 +144,6 @@ class ClienteDAO:
         finally:
             if conn: conn.close()
 
-    # ------------------------------------------------
-    # UPDATE (IMPLEMENTADO)
-    # ------------------------------------------------
     def update(self, cliente_id, nome=None, email=None, cpf_cnpj=None, telefone=None, sexo=None, localizacao_data=None):
         """ 
         Atualiza o cliente e sua localização. 
@@ -173,7 +154,7 @@ class ClienteDAO:
 
         try:
             with conn.cursor() as cur:
-                # 1. PEGAR O ID DA LOCALIZAÇÃO
+                # PEGAR O ID DA LOCALIZAÇÃO
                 cur.execute("SELECT id_localizacao FROM cliente WHERE id_cliente = %s;", (cliente_id,))
                 result = cur.fetchone()
                 if not result:
@@ -183,7 +164,6 @@ class ClienteDAO:
                 rows_affected_cliente = 0
                 rows_affected_localizacao = 0
 
-                # 2. UPDATE na tabela CLIENTE
                 fields_cliente = []
                 values_cliente = []
                 
@@ -209,7 +189,7 @@ class ClienteDAO:
                     cur.execute(sql_cliente, tuple(values_cliente))
                     rows_affected_cliente = cur.rowcount
 
-                # 3. UPDATE na tabela LOCALIZACAO
+                # UPDATE na tabela LOCALIZACAO
                 if localizacao_data:
                     fields_localizacao = []
                     values_localizacao = []
@@ -239,7 +219,7 @@ class ClienteDAO:
                         cur.execute(sql_localizacao, tuple(values_localizacao))
                         rows_affected_localizacao = cur.rowcount
                         
-                # 4. COMMIT DA TRANSAÇÃO
+                # COMMIT DA TRANSAÇÃO
                 if rows_affected_cliente > 0 or rows_affected_localizacao > 0:
                     conn.commit()
                     return 1 # Retorna 1 se qualquer alteração ocorreu
@@ -252,9 +232,8 @@ class ClienteDAO:
             return -1
         finally:
             if conn: conn.close()
-    # ------------------------------------------------
-    # DELETE
-    # ------------------------------------------------
+
+
     def delete(self, cliente_id):
         """ Deleta o cliente e sua localização na mesma transação. """
         conn = get_db_connection()
@@ -262,18 +241,18 @@ class ClienteDAO:
 
         try:
             with conn.cursor() as cur:
-                # 1. Obter o id_localizacao antes de deletar o cliente
+                # Obter o id_localizacao antes de deletar o cliente
                 cur.execute("SELECT id_localizacao FROM cliente WHERE id_cliente = %s;", (cliente_id,))
                 result = cur.fetchone()
                 if not result:
                     return 0
                 id_localizacao = result[0]
 
-                # 2. DELETE o cliente
+                # DELETE o cliente
                 cur.execute("DELETE FROM cliente WHERE id_cliente = %s;", (cliente_id,))
                 rows_deleted_cliente = cur.rowcount
                 
-                # 3. DELETE a localização
+                # DELETE a localização
                 cur.execute("DELETE FROM localizacao WHERE id_localizacao = %s;", (id_localizacao,))
                 
                 conn.commit()

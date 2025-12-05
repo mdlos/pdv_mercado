@@ -5,12 +5,10 @@ from src.db_connection import get_db_connection
 import sys
 import logging
 import os
-# REMOVER ESTA LINHA: from app import bcrypt 
-# O objeto 'bcrypt' é passado como argumento na função initialize_application(app, bcrypt)
 
 logger = logging.getLogger(__name__)
 
-def initialize_application(app, bcrypt): # A função recebe o objeto bcrypt como argumento
+def initialize_application(app, bcrypt):
     """
     Função principal de inicialização: cria um Superusuário MINIMAL.
     """
@@ -21,7 +19,7 @@ def initialize_application(app, bcrypt): # A função recebe o objeto bcrypt com
         sys.exit(1) 
 
     try:
-        # 1. Verificar/Criar o Tipo de Funcionário 'Admin'
+        # Verificar/Criar o Tipo de Funcionário 'Admin'
         CARGO_ADMIN_TEMP = 'Admin'
         with conn.cursor() as cur:
             cur.execute(f"SELECT id_tipo_funcionario FROM tipo_funcionario WHERE cargo = %s", (CARGO_ADMIN_TEMP,))
@@ -36,7 +34,7 @@ def initialize_application(app, bcrypt): # A função recebe o objeto bcrypt com
         
         tipo_admin_id = result[0]
 
-        # 2. Verificar se o Superusuário Admin já existe
+        # Verificar se o Superusuário Admin já existe
         admin_cpf = '00000000000'
         funcionario_dao = FuncionarioDAO()
         admin_exists = funcionario_dao.find_by_cpf(admin_cpf)
@@ -61,7 +59,7 @@ def initialize_application(app, bcrypt): # A função recebe o objeto bcrypt com
                         break
                     print("A senha deve ter pelo menos 6 caracteres.")
             
-            # 3. Hash da Senha e Inserção
+            # Hash da Senha e Inserção
             senha_hashed = bcrypt.generate_password_hash(senha_pura).decode('utf-8')
             
             # Insere o Superusuário Mínimo (com email preenchido e o resto como NULL)
