@@ -14,8 +14,6 @@
 </div>
 
 
-<img width=100% src="https://github.com/mdlos/pdv_mercado/blob/main/entrega_de_atividade/MarketCoffee.png"/>
-
 
 ## 🗒️ Sobre o Projeto
 
