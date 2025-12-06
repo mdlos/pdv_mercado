@@ -7,7 +7,7 @@ Esta documentação detalha os endpoints principais da API, com exemplos de dado
 ---
 
 ## 1. Clientes
-**Endpoint:** `/clientes`
+**Endpoint Base:** `/clientes`
 
 ### 1.1. Criar Cliente (POST)
 **URL:** `/api/v1/clientes/`
@@ -30,7 +30,7 @@ Esta documentação detalha os endpoints principais da API, com exemplos de dado
   }
 }
 ```
-*Nota: `email`, `telefone` e `sexo` são opcionais. Se vazios, não envie ou envie `null`.*
+*Nota: `email`, `telefone` e `sexo` são opcionais. Se vazios, envie `null` ou não envie o campo.*
 
 **Resposta de Sucesso (201 Created):**
 ```json
@@ -64,23 +64,48 @@ Esta documentação detalha os endpoints principais da API, com exemplos de dado
     "id_cliente": 1,
     "nome": "João Silva",
     "cpf_cnpj": "123.456.789-01",
-    "email": "joao@email.com",
-    "localizacao_saida": { ... }
-    // ... outros campos
-  },
-  {
-    "id_cliente": 2,
-    "nome": "Maria Souza",
-    "cpf_cnpj": "987.654.321-00",
     // ...
-  }
+  },
+  // ...
 ]
 ```
+
+### 1.3. Buscar Cliente (GET)
+**URL:** `/api/v1/clientes/{identifier}`
+*Aceita busca por **ID** (inteiro) ou **CPF/CNPJ** (string) no mesmo endpoint.*
+
+**Exemplos:**
+*   `/api/v1/clientes/1` (Busca pelo ID 1)
+*   `/api/v1/clientes/12345678901` (Busca pelo CPF)
+
+**Resposta de Sucesso (200 OK):**
+Retorna o objeto completo do cliente (mesmo formato do POST).
+
+### 1.4. Atualizar Cliente (PUT)
+**URL:** `/api/v1/clientes/{id_cliente}`
+
+**Corpo da Requisição (JSON - Parcial):**
+Envie apenas os campos que deseja alterar.
+```json
+{
+  "email": "novo@email.com",
+  "localizacao": {
+      "logradouro": "Nova Rua",
+      "numero": "999"
+  }
+}
+```
+
+### 1.5. Deletar Cliente (DELETE)
+**URL:** `/api/v1/clientes/{id_cliente}`
+
+**Resposta de Sucesso (204 No Content):**
+Sem conteúdo.
 
 ---
 
 ## 2. Funcionários
-**Endpoint:** `/funcionarios`
+**Endpoint Base:** `/funcionarios`
 
 ### 2.1. Criar Funcionário (POST)
 **URL:** `/api/v1/funcionarios/`
@@ -107,7 +132,7 @@ Esta documentação detalha os endpoints principais da API, com exemplos de dado
   }
 }
 ```
-*Nota: `id_tipo_funcionario`: 1 = Admin, 2 = Vendedor (exemplo).*
+*Nota: `id_tipo_funcionario`: 1 = Admin/Gerente, 2 = Vendedor/Operador.*
 
 **Resposta de Sucesso (201 Created):**
 ```json
@@ -117,16 +142,12 @@ Esta documentação detalha os endpoints principais da API, com exemplos de dado
   "sobrenome": "Pereira",
   "email": "ana@mercado.com",
   "telefone": "(11) 98888-7777",
-  "sexo": "F",
   "cargo": {
     "id": 2,
     "nome": "Vendedor"
   },
   "localizacao_detalhes": {
     "id_localizacao": 11,
-    "logradouro": "Av. Paulista",
-    "cidade": "São Paulo",
-    "uf": "SP",
     // ...
   }
 }
@@ -135,23 +156,21 @@ Esta documentação detalha os endpoints principais da API, com exemplos de dado
 ### 2.2. Listar Funcionários (GET)
 **URL:** `/api/v1/funcionarios/`
 
-**Resposta de Sucesso (200 OK):**
-```json
-[
-  {
-    "cpf": "111.222.333-44",
-    "nome": "Ana",
-    "cargo": { "id": 2, "nome": "Vendedor" },
-    // ...
-  },
-  // ...
-]
-```
+### 2.3. Buscar Funcionário (GET)
+**URL:** `/api/v1/funcionarios/{cpf}`
+*Busca através do CPF (apenas números ou formatado).*
+
+### 2.4. Atualizar Funcionário (PUT)
+**URL:** `/api/v1/funcionarios/{cpf}`
+*Permite atualizar dados cadastrais e senha.*
+
+### 2.5. Deletar Funcionário (DELETE)
+**URL:** `/api/v1/funcionarios/{cpf}`
 
 ---
 
 ## 3. Produtos
-**Endpoint:** `/produtos`
+**Endpoint Base:** `/produtos`
 
 ### 3.1. Criar Produto (POST)
 **URL:** `/api/v1/produtos/`
@@ -179,27 +198,22 @@ Esta documentação detalha os endpoints principais da API, com exemplos de dado
 
 ### 3.2. Listar Produtos (GET)
 **URL:** `/api/v1/produtos/`
+*Retorna lista de produtos com suas quantidades em estoque.*
 
-**Resposta de Sucesso (200 OK):**
-```json
-[
-  {
-    "codigo_produto": 15,
-    "nome": "Arroz 5kg",
-    "descricao": "Arroz Branco Tipo 1",
-    "preco": 25.90,
-    "codigo_barras": "7891234567890",
-    "quantidade": 100 
-  },
-  // ...
-]
-```
-*Nota: O campo `quantidade` reflete o estoque atual.*
+### 3.3. Buscar Produto por ID (GET)
+**URL:** `/api/v1/produtos/{id}`
+
+### 3.4. Atualizar Produto (PUT)
+**URL:** `/api/v1/produtos/{id}`
+*Atualiza dados do produto (preço, nome, descrição, código de barras).*
+
+### 3.5. Deletar Produto (DELETE)
+**URL:** `/api/v1/produtos/{id}`
 
 ---
 
 ## 4. Vendas
-**Endpoint:** `/vendas`
+**Endpoint Base:** `/vendas`
 
 ### 4.1. Registrar Venda (POST)
 **URL:** `/api/v1/vendas/`
@@ -209,63 +223,28 @@ Esta documentação detalha os endpoints principais da API, com exemplos de dado
 {
   "cpf_funcionario": "11122233344",
   "cpf_cliente": "12345678901", 
+  "desconto": 0.0,
   "itens": [
     {
       "codigo_produto": 15,
-      "quantidade_venda": 2
-    },
-    {
-      "codigo_produto": 8,
-      "quantidade_venda": 1
+      "quantidade_venda": 2,
+      "preco_unitario": 25.90
     }
   ],
   "pagamentos": [
     {
-      "id_tipo_pagamento": 1, 
-      "valor_pago": 50.00
-    },
-    {
-      "id_tipo_pagamento": 2, 
-      "valor_pago": 10.00
+      "id_tipo": 1, 
+      "valor_pago": 60.00
     }
   ]
 }
 ```
-*Nota: `cpf_cliente` é opcional. `id_tipo_pagamento`: 1=Dinheiro, 2=Crédito, 3=Débito, 4=Pix (exemplo).*
+*   `cpf_cliente` é opcional.
+*   `preco_unitario` deve ser enviado para garantir consistência histórica.
+*   `id_tipo` (Pagamento): 1=Dinheiro (exige `valor_pago` explícito). Outros (Cartão/Pix) podem ter `valor_pago` omitido para auto-preenchimento do total restante.
 
 **Resposta de Sucesso (201 Created):**
-```json
-{
-  "id_venda": 50,
-  "data_venda": "2025-12-04T14:30:00",
-  "total_venda": 60.00,
-  "funcionario": {
-    "cpf": "111.222.333-44",
-    "nome": "Ana"
-  },
-  "cliente": {
-    "id_cliente": 1,
-    "nome": "João Silva"
-  },
-  "itens": [
-    {
-      "codigo_produto": 15,
-      "nome_produto": "Arroz 5kg",
-      "quantidade": 2,
-      "preco_unitario": 25.90,
-      "subtotal": 51.80
-    },
-    // ...
-  ],
-  "pagamentos": [
-    {
-      "tipo_pagamento": "Dinheiro",
-      "valor": 50.00
-    },
-    // ...
-  ]
-}
-```
+Retorna o objeto completo da venda, incluindo `troco` e totais calculados.
 
 ### 4.2. Listar Vendas (GET)
 **URL:** `/api/v1/vendas/`
@@ -273,18 +252,69 @@ Esta documentação detalha os endpoints principais da API, com exemplos de dado
 **Filtros Opcionais (Query Params):**
 *   `?data=YYYY-MM-DD`: Filtra por data específica.
 *   `?cpf=...`: Filtra por CPF do cliente.
-*   `/hoje`: Atalho para vendas de hoje.
+*   Rota útil: `/api/v1/vendas/hoje` (Vendas do dia atual).
 
-**Resposta de Sucesso (200 OK):**
-```json
-[
-  {
-    "id_venda": 50,
-    "data_venda": "2025-12-04T14:30:00",
-    "total_venda": 60.00,
-    "funcionario": { ... },
-    "cliente": { ... },
-    // ...
-  }
-]
-```
+### 4.3. Buscar Venda por ID (GET)
+**URL:** `/api/v1/vendas/{id_venda}`
+
+---
+
+## 5. Tutorial de Execução (Primeira Vez)
+
+Este guia orienta como configurar e executar o projeto (Backend e Frontend) em ambiente de desenvolvimento local.
+
+### 5.1. Pré-requisitos
+*   **Python 3.8+** instalado.
+*   **Node.js 18+** e **npm** instalados.
+
+### 5.2. Executando o Backend (API)
+
+1.  **Navegue até a pasta do backend:**
+    ```bash
+    cd backend_api
+    ```
+
+2.  **Crie e ative um ambiente virtual (Recomendado):**
+    *   *Windows:*
+        ```bash
+        python -m venv venv
+        .\venv\Scripts\activate
+        ```
+    *   *Linux/Mac:*
+        ```bash
+        python3 -m venv venv
+        source venv/bin/activate
+        ```
+
+3.  **Instale as dependências:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **Configure o ambiente (.env):**
+    *   Crie um arquivo `.env` na raiz de `backend_api` se não existir.
+    *   Defina as variáveis básicas (ex: `PORT=8080`, configurações de banco).
+
+5.  **Inicie o servidor:**
+    ```bash
+    python app.py
+    ```
+    *   O servidor iniciará (padrão em `http://127.0.0.1:5000` ou na porta definida no `.env` e.g., `8080`).
+
+### 5.3. Executando o Frontend (Web App)
+
+1.  **Navegue até a pasta do frontend:**
+    ```bash
+    cd frontend
+    ```
+
+2.  **Instale as dependências:**
+    ```bash
+    npm install
+    ```
+
+3.  **Inicie o servidor de desenvolvimento:**
+    ```bash
+    npm run dev
+    ```
+    *   O terminal exibirá a URL local (geralmente `http://localhost:5173`).
