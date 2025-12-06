@@ -94,7 +94,7 @@ def create_app(testing=False):
 
 # Executa a aplicação
 if __name__ == '__main__':
-    port = os.getenv('PORT', 5000)
+    port = os.getenv('PORT', 8080)
     
     app = create_app() 
     app.run(debug=True, port=port)
