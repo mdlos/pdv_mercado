@@ -13,6 +13,10 @@
  <a href="#-desenvolvedores"> Desenvolvedores</a>
 </div>
 
+
+<img width=100% src="https://github.com/mdlos/pdv_mercado/blob/main/entrega_de_atividade/MarketCoffee.png"/>
+
+
 ## 🗒️ Sobre o Projeto
 
 Este projeto faz parte da disciplina **Banco de Dados** do curso de **Ciências da Computação da UESB**, sob orientação dos professores **Hélio Lopes dos Santos** e **Maísa Soares dos Santos Lopes**.
