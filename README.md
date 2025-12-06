@@ -19,209 +19,339 @@ Este projeto faz parte da disciplina **Banco de Dados** do curso de **Ciências 
 
 O objetivo é desenvolver um **sistema de PDV (Ponto de Venda) para mercado**, aplicando conceitos de modelagem e gerenciamento de banco de dados. O projeto visa consolidar o aprendizado sobre estruturação de dados, integração entre sistemas e práticas colaborativas em equipe utilizando **Git e GitHub** para controle de versão.
 
-O repositório inclui uma pasta chamada **atividade**, onde estão os arquivos relacionados ao desenvolvimento e às entregas do projeto.
 
 
 ## 🛠 Tecnologias
 
 1. **Git e GitHub** – para versionamento e colaboração;
 2. **VS Code** – ambiente de desenvolvimento;
-3. **Banco de Dados** – PostgreSQL, MariaDB ou MySQL;
-4. **Linguagens** – HTML, CSS, Python e PHP;
-5. **Framework** – React, para a interface web do sistema.
-6. **Docker** – para conteinerização e facilitação do deploy do sistema.
+3. **Banco de Dados** – PostgreSQL, pgAdmin;
+4. **Linguagens** – HTML, CSS, Python e Typescript;
+5. **Framework/Bibliotecas** – Flask, Psycopg, React, MaterialUI, Tailwind, FramerMotion;
 
 
-## 👨‍💻 Instalação
+# Documentação da API - PDV Mercado
 
-| Systema  | Local padrão da pasta                       |
-| ------- | -------------------------------------------- |
-| Linux   | `~/opt/marketcoffee`                              |
-| macOS   | `~/`                              |
-| Windows | `~\Documents\`                               |
+Esta documentação detalha os endpoints principais da API, com exemplos de dados para envio (Input) e o formato das respostas (Output).
 
-- Escolha uma das maneiras de instalar
-  - **GitHub**
-    - Clone o git `/home/` folder.
-  - **ZIP**
-    - Desacompactar o arquivo Zip em sua pasta padrão.
-- No Windows.
-- No Linux.
-# Market Coffee PDV – Guia de Instalação com Docker (Linux)
-Passo a passo como instalar e executar o projeto Market Coffee PDV no Linux utilizando Docker e Docker Compose.
-## 1. Pré-requisitos
-Certifique-se de que seu sistema está atualizado:
-```
-sudo apt update
-sudo apt upgrade -y
-```
-## 2. Instalar Docker e Docker Compose
-```
-sudo apt install -y docker.io docker-compose
-```
-Adicionar seu usuário ao grupo docker:
-```
-sudo usermod -aG docker SEU_USUARIO
-groups SEU_USUARIO   # para confirmar
-```
-Iniciar o serviço do Docker e ativá-lo na inicialização:
-```
-sudo service docker start
-sudo update-rc.d docker defaults
-docker info
-```
-## 3. Criar diretório do projeto
-```
-mkdir -p /opt/market_coffee_pdv
-cd /opt/market_coffee_pdv
-```
-## 4. Criar arquivos do projeto
-### docker-compose.yml
-Crie o arquivo:
-```
-nano docker-compose.yml
-```
-Adicione algo como:
-```
-version: "3.9"
+**Base URL:** `http://127.0.0.1:8080/api/v1`
 
-services:
-  backend:
-    build: ./backend
-    container_name: pdv_backend
-    ports:
-      - "8000:8000"
-    depends_on:
-      - postgres
-    volumes:
-      - ./backend:/app
+---
 
-  frontend:
-    build: ./frontend
-    container_name: pdv_frontend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
+## 1. Clientes
+**Endpoint Base:** `/clientes`
 
-  postgres:
-    image: postgres:15
-    container_name: pdv_postgres
-    environment:
-      POSTGRES_USER: usuario_banco_dados
-      POSTGRES_PASSWORD: senha_banco_dados
-      POSTGRES_DB: pdv_market_coffee
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-```
-### Dockerfiles iniciais
-Criar estrutura:
-```
-mkdir backend frontend
-```
-Backend:
-```
-cd backend
-nano Dockerfile
-```
-Exemplo:
-```
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-CMD ["python", "main.py"]
-```
-Frontend:
-```
-cd ../frontend
-nano Dockerfile
-```
-Exemplo:
-```
-FROM node:20
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-CMD ["npm", "run", "dev"]
-```
-Volte ao diretório principal:
-```
-cd /opt/market_coffee_pdv
-```
-## 5. Subir o ambiente pela primeira vez
-```
-docker-compose up -d
-```
-## 6. Configurar o backend
-Crie o requirements.txt:
-```
-nano backend/requirements.txt
-```
-Adicione:
-```
-fastapi
-uvicorn
-psycopg2-binary
-SQLAlchemy
-python-dotenv
-```
-Rebuild do backend:
-```
-docker-compose build backend
-docker-compose up -d
-```
-## 7. Baixar o código oficial do projeto
-Entre no backend:
-```
-cd backend
-git clone https://github.com/mdlos/pdv_mercado.git
-```
-O GitHub baixa como pasta:
-```
-pdv_mercado-main
-```
-Copie os arquivos para dentro do backend:
-```
-cd pdv_mercado-main/backend_api
-mv * /opt/market_coffee_pdv/backend/
-```
-Volte ao diretório principal:
-```
-cd /opt/market_coffee_pdv/backend
-```
-Rebuild do backend:
-```
-docker-compose up -d --build
-```
-## 8. Importar o banco de dados
-Volte onde está o dump SQL:
-```
-cd /opt/market_coffee_pdv
-```
-Se o arquivo veio do repositório:
-```
-cd pdv_mercado-main
-mv pdv_market_coffee.sql /opt/market_coffee_pdv/
-cd /opt/market_coffee_pdv
-```
-Importar para o Postgres:
-```
-docker exec -i pdv_postgres psql -U usuario_banco_dados -d pdv_market_coffee < /opt/market_coffee_pdv/pdv_market_coffee.sql
-```
-## 9. Acessar o sistema
-Backend (FastAPI):\
-[http://localhost:8000]()
-Frontend (React ou equivalente):\
-[http://localhost:3000]()
-Banco de dados:\
-PostgreSQL rodando em localhost:5432
+### 1.1. Criar Cliente (POST)
+**URL:** `/api/v1/clientes/`
 
-OBS: O sistema pode ser usando com o Docker via conteiners conforme descrito ou s/ o Docker rodando os scripts Python!
+**Corpo da Requisição (JSON):**
+```json
+{
+  "nome": "João Silva",
+  "cpf_cnpj": "12345678901",
+  "email": "joao@email.com",
+  "telefone": "11999998888",
+  "sexo": "M", 
+  "localizacao": {
+    "logradouro": "Rua das Flores",
+    "numero": "123",
+    "bairro": "Centro",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "01001000"
+  }
+}
+```
+*Nota: `email`, `telefone` e `sexo` são opcionais. Se vazios, envie `null` ou não envie o campo.*
+
+**Resposta de Sucesso (201 Created):**
+```json
+{
+  "id_cliente": 1,
+  "nome": "João Silva",
+  "cpf_cnpj": "123.456.789-01",
+  "email": "joao@email.com",
+  "telefone": "(11) 99999-8888",
+  "sexo": "M",
+  "tipo_doc": "cpf",
+  "localizacao_saida": {
+    "id_localizacao": 10,
+    "logradouro": "Rua das Flores",
+    "numero": "123",
+    "bairro": "Centro",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "01001-000"
+  }
+}
+```
+
+### 1.2. Listar Clientes (GET)
+**URL:** `/api/v1/clientes/`
+
+**Resposta de Sucesso (200 OK):**
+```json
+[
+  {
+    "id_cliente": 1,
+    "nome": "João Silva",
+    "cpf_cnpj": "123.456.789-01",
+    // ...
+  },
+  // ...
+]
+```
+
+### 1.3. Buscar Cliente (GET)
+**URL:** `/api/v1/clientes/{identifier}`
+*Aceita busca por **ID** (inteiro) ou **CPF/CNPJ** (string) no mesmo endpoint.*
+
+**Exemplos:**
+*   `/api/v1/clientes/1` (Busca pelo ID 1)
+*   `/api/v1/clientes/12345678901` (Busca pelo CPF)
+
+**Resposta de Sucesso (200 OK):**
+Retorna o objeto completo do cliente (mesmo formato do POST).
+
+### 1.4. Atualizar Cliente (PUT)
+**URL:** `/api/v1/clientes/{id_cliente}`
+
+**Corpo da Requisição (JSON - Parcial):**
+Envie apenas os campos que deseja alterar.
+```json
+{
+  "email": "novo@email.com",
+  "localizacao": {
+      "logradouro": "Nova Rua",
+      "numero": "999"
+  }
+}
+```
+
+### 1.5. Deletar Cliente (DELETE)
+**URL:** `/api/v1/clientes/{id_cliente}`
+
+**Resposta de Sucesso (204 No Content):**
+Sem conteúdo.
+
+---
+
+## 2. Funcionários
+**Endpoint Base:** `/funcionarios`
+
+### 2.1. Criar Funcionário (POST)
+**URL:** `/api/v1/funcionarios/`
+
+**Corpo da Requisição (JSON):**
+```json
+{
+  "nome": "Ana",
+  "sobrenome": "Pereira",
+  "cpf": "11122233344",
+  "senha": "senhaSegura123",
+  "id_tipo_funcionario": 2, 
+  "email": "ana@mercado.com",
+  "telefone": "11988887777",
+  "sexo": "F",
+  "nome_social": null,
+  "localizacao": {
+    "logradouro": "Av. Paulista",
+    "numero": "1000",
+    "bairro": "Bela Vista",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "01310100"
+  }
+}
+```
+*Nota: `id_tipo_funcionario`: 1 = Admin/Gerente, 2 = Vendedor/Operador.*
+
+**Resposta de Sucesso (201 Created):**
+```json
+{
+  "cpf": "111.222.333-44",
+  "nome": "Ana",
+  "sobrenome": "Pereira",
+  "email": "ana@mercado.com",
+  "telefone": "(11) 98888-7777",
+  "cargo": {
+    "id": 2,
+    "nome": "Vendedor"
+  },
+  "localizacao_detalhes": {
+    "id_localizacao": 11,
+    // ...
+  }
+}
+```
+
+### 2.2. Listar Funcionários (GET)
+**URL:** `/api/v1/funcionarios/`
+
+### 2.3. Buscar Funcionário (GET)
+**URL:** `/api/v1/funcionarios/{cpf}`
+*Busca através do CPF (apenas números ou formatado).*
+
+### 2.4. Atualizar Funcionário (PUT)
+**URL:** `/api/v1/funcionarios/{cpf}`
+*Permite atualizar dados cadastrais e senha.*
+
+### 2.5. Deletar Funcionário (DELETE)
+**URL:** `/api/v1/funcionarios/{cpf}`
+
+---
+
+## 3. Produtos
+**Endpoint Base:** `/produtos`
+
+### 3.1. Criar Produto (POST)
+**URL:** `/api/v1/produtos/`
+
+**Corpo da Requisição (JSON):**
+```json
+{
+  "nome": "Arroz 5kg",
+  "descricao": "Arroz Branco Tipo 1",
+  "preco": 25.90,
+  "codigo_barras": "7891234567890",
+  "initial_quantity": 100 
+}
+```
+*Nota: `initial_quantity` é opcional. Se enviado, cria um registro inicial de estoque.*
+
+**Resposta de Sucesso (201 Created):**
+```json
+{
+  "message": "Produto criado com sucesso!",
+  "codigo_produto": 15,
+  "nome": "Arroz 5kg"
+}
+```
+
+### 3.2. Listar Produtos (GET)
+**URL:** `/api/v1/produtos/`
+*Retorna lista de produtos com suas quantidades em estoque.*
+
+### 3.3. Buscar Produto por ID (GET)
+**URL:** `/api/v1/produtos/{id}`
+
+### 3.4. Atualizar Produto (PUT)
+**URL:** `/api/v1/produtos/{id}`
+*Atualiza dados do produto (preço, nome, descrição, código de barras).*
+
+### 3.5. Deletar Produto (DELETE)
+**URL:** `/api/v1/produtos/{id}`
+
+---
+
+## 4. Vendas
+**Endpoint Base:** `/vendas`
+
+### 4.1. Registrar Venda (POST)
+**URL:** `/api/v1/vendas/`
+
+**Corpo da Requisição (JSON):**
+```json
+{
+  "cpf_funcionario": "11122233344",
+  "cpf_cliente": "12345678901", 
+  "desconto": 0.0,
+  "itens": [
+    {
+      "codigo_produto": 15,
+      "quantidade_venda": 2,
+      "preco_unitario": 25.90
+    }
+  ],
+  "pagamentos": [
+    {
+      "id_tipo": 1, 
+      "valor_pago": 60.00
+    }
+  ]
+}
+```
+*   `cpf_cliente` é opcional.
+*   `preco_unitario` deve ser enviado para garantir consistência histórica.
+*   `id_tipo` (Pagamento): 1=Dinheiro (exige `valor_pago` explícito). Outros (Cartão/Pix) podem ter `valor_pago` omitido para auto-preenchimento do total restante.
+
+**Resposta de Sucesso (201 Created):**
+Retorna o objeto completo da venda, incluindo `troco` e totais calculados.
+
+### 4.2. Listar Vendas (GET)
+**URL:** `/api/v1/vendas/`
+
+**Filtros Opcionais (Query Params):**
+*   `?data=YYYY-MM-DD`: Filtra por data específica.
+*   `?cpf=...`: Filtra por CPF do cliente.
+*   Rota útil: `/api/v1/vendas/hoje` (Vendas do dia atual).
+
+### 4.3. Buscar Venda por ID (GET)
+**URL:** `/api/v1/vendas/{id_venda}`
+
+---
+
+## 5. Tutorial de Execução (Primeira Vez)
+
+Este guia orienta como configurar e executar o projeto (Backend e Frontend) em ambiente de desenvolvimento local.
+
+### 5.1. Pré-requisitos
+*   **Python 3.8+** instalado.
+*   **Node.js 18+** e **npm** instalados.
+
+### 5.2. Executando o Backend (API)
+
+1.  **Navegue até a pasta do backend:**
+    ```bash
+    cd backend_api
+    ```
+
+2.  **Crie e ative um ambiente virtual (Recomendado):**
+    *   *Windows:*
+        ```bash
+        python -m venv venv
+        .\venv\Scripts\activate
+        ```
+    *   *Linux/Mac:*
+        ```bash
+        python3 -m venv venv
+        source venv/bin/activate
+        ```
+
+3.  **Instale as dependências:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **Configure o ambiente (.env):**
+    *   Crie um arquivo `.env` na raiz de `backend_api` se não existir.
+    *   Defina as variáveis básicas (ex: `PORT=8080`, configurações de banco).
+
+5.  **Inicie o servidor:**
+    ```bash
+    python app.py
+    ```
+    *   O servidor iniciará (padrão em `http://127.0.0.1:5000` ou na porta definida no `.env` e.g., `8080`).
+
+### 5.3. Executando o Frontend (Web App)
+
+1.  **Navegue até a pasta do frontend:**
+    ```bash
+    cd frontend
+    ```
+
+2.  **Instale as dependências:**
+    ```bash
+    npm install
+    ```
+
+3.  **Inicie o servidor de desenvolvimento:**
+    ```bash
+    npm run dev
+    ```
+    *   O terminal exibirá a URL local (geralmente `http://localhost:5173`).
+
+
 
 ## 💻 Desenvolvedores
  
