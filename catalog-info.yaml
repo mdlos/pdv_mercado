@@ -1,0 +1,44 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: pdv-mercado
+  title: "pdv_mercado"
+  description: "Projeto de Banco de Dados "
+  annotations:
+    github.com/project-slug: "mdlos/pdv_mercado"
+spec:
+  owner: user:default/guest
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: frontend-frontend
+  title: "frontend-frontend"
+  description: "Componente frontend-frontend (website)"
+  tags:
+    - react
+    - vite
+  annotations:
+    github.com/project-slug: "mdlos/pdv_mercado"
+spec:
+  type: website
+  lifecycle: experimental
+  owner: user:default/guest
+  system: pdv-mercado
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: backend-api-backend
+  title: "backend_api-backend"
+  description: "Componente backend_api-backend (service)"
+  tags:
+    - python
+    - flask
+  annotations:
+    github.com/project-slug: "mdlos/pdv_mercado"
+spec:
+  type: service
+  lifecycle: experimental
+  owner: user:default/guest
+  system: pdv-mercado
