@@ -2,44 +2,63 @@ apiVersion: backstage.io/v1alpha1
 kind: System
 metadata:
   name: pdv-mercado
-  title: pdv-mercado
-  description: Sistema pdv-mercado analisado automaticamente
+  title: "pdv_mercado"
+  description: "Projeto de Banco de Dados "
   annotations:
-    github.com/project-slug: mdlos/pdv_mercado
+    github.com/project-slug: "mdlos/pdv_mercado"
 spec:
-  owner: EUBrener
+  owner: user:default/guest
 ---
 apiVersion: backstage.io/v1alpha1
-kind: Component
+kind: Resource
 metadata:
-  name: pdv-mercado-backend-api
-  title: pdv-mercado-backend-api
-  description: Componente pdv-mercado-backend-api (service)
+  name: postgres-db
+  title: "Postgres-db"
+  description: "Recurso Postgres-db (database)"
   tags:
-  - python
-  - flask
+    - sql
   annotations:
-    github.com/project-slug: mdlos/pdv_mercado
+    github.com/project-slug: "mdlos/pdv_mercado"
 spec:
-  type: service
+  type: database
   lifecycle: experimental
-  owner: EUBrener
+  owner: user:default/guest
   system: pdv-mercado
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: pdv-mercado-frontend
-  title: pdv-mercado-frontend
-  description: Componente pdv-mercado-frontend (website)
+  name: frontend
+  title: "frontend"
+  description: "Componente frontend (website)"
   tags:
-  - node
-  - react
-  - vite
+    - react
+    - vite
   annotations:
-    github.com/project-slug: mdlos/pdv_mercado
+    github.com/project-slug: "mdlos/pdv_mercado"
 spec:
   type: website
   lifecycle: experimental
-  owner: EUBrener
+  owner: user:default/guest
   system: pdv-mercado
+  dependsOn:
+    - component:default/backend
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: backend
+  title: "backend"
+  description: "Componente backend (service)"
+  tags:
+    - python
+    - flask
+  annotations:
+    github.com/project-slug: "mdlos/pdv_mercado"
+spec:
+  type: service
+  lifecycle: experimental
+  owner: user:default/guest
+  system: pdv-mercado
+  dependsOn:
+    - resource:default/postgres-db
